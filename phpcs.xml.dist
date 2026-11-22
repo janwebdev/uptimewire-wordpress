@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<ruleset name="UptimeWire">
+    <description>WordPress Coding Standards and PHP 7.4 compatibility for the UptimeWire plugin.</description>
+
+    <file>.</file>
+    <exclude-pattern>/vendor/*</exclude-pattern>
+    <exclude-pattern>/build/*</exclude-pattern>
+    <exclude-pattern>/docker/*</exclude-pattern>
+
+    <arg name="extensions" value="php"/>
+    <arg value="sp"/>
+
+    <config name="testVersion" value="7.4-"/>
+    <config name="minimum_wp_version" value="6.5"/>
+
+    <rule ref="WordPress"/>
+    <rule ref="PHPCompatibilityWP"/>
+
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="uptimewire"/>
+            </property>
+        </properties>
+    </rule>
+
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="uptimewire"/>
+                <element value="UptimeWire"/>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- Tests follow PHPUnit naming. -->
+    <rule ref="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid">
+        <exclude-pattern>/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.Files.FileName">
+        <exclude-pattern>/tests/*</exclude-pattern>
+    </rule>
+</ruleset>

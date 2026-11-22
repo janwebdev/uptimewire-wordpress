@@ -1,0 +1,162 @@
+/* UptimeWire admin screens. Loaded only on the plugin's own screens. */
+
+.uptimewire .uptimewire-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.uptimewire .uptimewire-shield {
+	flex: none;
+	color: #b84500;
+}
+
+.uptimewire-welcome {
+	box-sizing: border-box;
+	max-width: 760px;
+	margin-top: 16px;
+	padding: 20px 24px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-left: 4px solid #b84500;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.uptimewire-welcome h2 {
+	margin-top: 0;
+	font-size: 1.5em;
+	line-height: 1.3;
+}
+
+.uptimewire-lead {
+	font-size: 14px;
+	max-width: 60ch;
+}
+
+.uptimewire-welcome .notice.inline {
+	margin: 12px 0;
+}
+
+.uptimewire-connect fieldset {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+
+.uptimewire-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 12px;
+	margin: 16px 0 4px;
+}
+
+.uptimewire-actions .button {
+	margin: 0;
+}
+
+.uptimewire-unavailable {
+	display: flex;
+	align-items: flex-start;
+	gap: 4px;
+}
+
+.uptimewire-benefits {
+	margin: 16px 0;
+}
+
+.uptimewire-benefits li {
+	display: flex;
+	align-items: flex-start;
+	gap: 4px;
+}
+
+.uptimewire-benefits .dashicons {
+	flex: none;
+	color: #00a32a;
+}
+
+.uptimewire-legal a {
+	white-space: nowrap;
+}
+
+.uptimewire-external {
+	margin-left: 2px;
+}
+
+.uptimewire-site {
+	margin: 20px -24px -20px;
+	padding: 12px 24px;
+	border-top: 1px solid #dcdcde;
+	background: #f6f7f7;
+}
+
+.uptimewire-site p {
+	margin: 8px 0;
+}
+
+.uptimewire-site-address {
+	overflow-wrap: anywhere;
+}
+
+.uptimewire-site-change summary {
+	display: inline-block;
+	color: #2271b1;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.uptimewire-site-change summary:hover {
+	color: #135e96;
+}
+
+.uptimewire-site-change label {
+	display: block;
+	margin-bottom: 4px;
+	font-weight: 600;
+}
+
+.uptimewire-site-change input[type="url"] {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 25em;
+}
+
+.uptimewire-site-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+}
+
+.uptimewire-state {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.uptimewire-state-off .dashicons {
+	color: #646970;
+}
+
+.uptimewire-footnote {
+	margin-top: 24px;
+	color: #646970;
+	font-size: 12px;
+}
+
+@media screen and (max-width: 600px) {
+	.uptimewire-welcome {
+		padding: 16px;
+	}
+
+	.uptimewire-site {
+		margin: 16px -16px -16px;
+		padding: 12px 16px;
+	}
+
+	.uptimewire-actions .button.button-hero {
+		width: 100%;
+		text-align: center;
+	}
+}

@@ -1,0 +1,237 @@
+# Copyright (C) 2026 UptimeWire
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: UptimeWire – Website Uptime & SSL Monitoring 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/uptimewire\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-11-22T22:22:36+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: uptimewire\n"
+
+#. Plugin Name of the plugin
+#: uptimewire.php
+msgid "UptimeWire – Website Uptime & SSL Monitoring"
+msgstr ""
+
+#. Plugin URI of the plugin
+#. Author URI of the plugin
+#: uptimewire.php
+msgid "https://uptimewire.com/"
+msgstr ""
+
+#. Description of the plugin
+#: uptimewire.php
+msgid "Monitor your WordPress website from outside: uptime, SSL certificate, domain and DNS checks by UptimeWire."
+msgstr ""
+
+#. Author of the plugin
+#: uptimewire.php
+#: includes/admin/class-admin.php:60
+#: includes/admin/class-admin.php:61
+#: includes/admin/class-overview-page.php:34
+msgid "UptimeWire"
+msgstr ""
+
+#: includes/admin/class-admin.php:72
+msgid "UptimeWire Overview"
+msgstr ""
+
+#: includes/admin/class-admin.php:73
+#: includes/admin/class-admin.php:129
+#: includes/admin/class-settings-page.php:56
+msgid "Overview"
+msgstr ""
+
+#: includes/admin/class-admin.php:81
+#: includes/admin/class-settings-page.php:30
+msgid "UptimeWire Settings"
+msgstr ""
+
+#: includes/admin/class-admin.php:82
+msgid "Settings"
+msgstr ""
+
+#: includes/admin/class-admin.php:131
+msgid "UptimeWire checks your website from its own servers on the internet: whether it is online, when the SSL certificate and the domain expire, and whether DNS works. Because the checks run outside WordPress, they keep working when your site is down, and they add no load to your server."
+msgstr ""
+
+#: includes/admin/class-admin.php:132
+msgid "Free monitoring covers one website and needs no credit card."
+msgstr ""
+
+#: includes/admin/class-admin.php:139
+msgid "Before you connect"
+msgstr ""
+
+#: includes/admin/class-admin.php:141
+msgid "UptimeWire must reach your website from the internet. Local sites (localhost, .local, .test or private network addresses) cannot be monitored. Staging and development sites can, but usually only the live site is worth alerts."
+msgstr ""
+
+#: includes/admin/class-admin.php:142
+msgid "The \"Website to monitor\" address comes from Settings › General › Site Address. Change it on the Overview screen if visitors reach your site at a different address, for example behind a reverse proxy."
+msgstr ""
+
+#: includes/admin/class-admin.php:149
+msgid "Privacy"
+msgstr ""
+
+#: includes/admin/class-admin.php:151
+msgid "This plugin connects to UptimeWire, an external service. Nothing is sent to UptimeWire until an administrator clicks \"Start Free Monitoring\" or \"Connect Existing Account\". No visitor data, user lists or content are ever sent."
+msgstr ""
+
+#: includes/admin/class-admin.php:156
+msgid "For more information:"
+msgstr ""
+
+#: includes/admin/class-admin.php:157
+msgid "UptimeWire Help Center"
+msgstr ""
+
+#: includes/admin/class-admin.php:158
+#: includes/admin/class-overview-page.php:74
+msgid "Terms of Service"
+msgstr ""
+
+#: includes/admin/class-admin.php:159
+#: includes/admin/class-overview-page.php:76
+msgid "Privacy Policy"
+msgstr ""
+
+#: includes/admin/class-admin.php:170
+msgid "Sorry, you are not allowed to change this setting."
+msgstr ""
+
+#: includes/admin/class-overview-page.php:27
+#: includes/admin/class-settings-page.php:26
+msgid "Sorry, you are not allowed to access this page."
+msgstr ""
+
+#: includes/admin/class-overview-page.php:39
+msgid "Keep Your WordPress Website Online"
+msgstr ""
+
+#: includes/admin/class-overview-page.php:40
+msgid "Get notified when your website goes down, your SSL certificate approaches expiration, or important website checks fail."
+msgstr ""
+
+#: includes/admin/class-overview-page.php:46
+msgid "Connect this website to UptimeWire"
+msgstr ""
+
+#: includes/admin/class-overview-page.php:51
+msgid "I understand"
+msgstr ""
+
+#: includes/admin/class-overview-page.php:56
+msgid "Start Free Monitoring"
+msgstr ""
+
+#: includes/admin/class-overview-page.php:57
+msgid "Connect Existing Account"
+msgstr ""
+
+#: includes/admin/class-overview-page.php:62
+#: includes/admin/class-settings-page.php:59
+msgid "Connection is not available in this build."
+msgstr ""
+
+#: includes/admin/class-overview-page.php:67
+msgid "Free monitoring for one website"
+msgstr ""
+
+#: includes/admin/class-overview-page.php:68
+msgid "No credit card required"
+msgstr ""
+
+#: includes/admin/class-overview-page.php:69
+msgid "Checks run from outside WordPress, so they keep working even when your site is offline"
+msgstr ""
+
+#: includes/admin/class-overview-page.php:72
+msgid "This plugin connects to UptimeWire, an external service. Nothing is sent to UptimeWire until you click a button above."
+msgstr ""
+
+#: includes/admin/class-overview-page.php:97
+msgid "This looks like a local site. UptimeWire checks websites from the internet, so it can't reach this one. Install the plugin on your live site instead."
+msgstr ""
+
+#: includes/admin/class-overview-page.php:101
+msgid "This looks like a staging or development site. Usually you only monitor the live site. Continue only if this site is public and you want alerts for it."
+msgstr ""
+
+#: includes/admin/class-overview-page.php:105
+msgid "Your site doesn't use HTTPS. Uptime, domain and DNS will be checked, but there's no certificate to check."
+msgstr ""
+
+#: includes/admin/class-overview-page.php:132
+msgid "Website to monitor:"
+msgstr ""
+
+#: includes/admin/class-overview-page.php:136
+msgid "Change"
+msgstr ""
+
+#: includes/admin/class-overview-page.php:141
+msgid "Website address"
+msgstr ""
+
+#: includes/admin/class-overview-page.php:145
+msgid "The address visitors use, starting with https:// or http://. By default it is the Site Address from Settings › General."
+msgstr ""
+
+#: includes/admin/class-overview-page.php:148
+msgid "Save address"
+msgstr ""
+
+#: includes/admin/class-overview-page.php:150
+msgid "Use the WordPress Site Address"
+msgstr ""
+
+#: includes/admin/class-overview-page.php:169
+msgid "Website address saved."
+msgstr ""
+
+#: includes/admin/class-overview-page.php:170
+msgid "The WordPress Site Address is used again."
+msgstr ""
+
+#: includes/admin/class-overview-page.php:171
+msgid "That is not a website address. Enter a full address such as https://example.com/ without a query string."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:33
+msgid "Connection"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:37
+msgid "Status"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:41
+msgid "Not connected"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:46
+msgid "Website"
+msgstr ""
+
+#. translators: %s: link to the UptimeWire Overview screen.
+#: includes/admin/class-settings-page.php:55
+#, php-format
+msgid "Connect this website from the %s screen."
+msgstr ""
+
+#. translators: Hidden text after a link to the UptimeWire website, read by screen readers.
+#: includes/admin/class-view.php:61
+msgid "(opens UptimeWire in a new tab)"
+msgstr ""
+
+#: includes/admin/class-view.php:71
+msgid "Monitoring runs on UptimeWire servers, outside WordPress."
+msgstr ""
