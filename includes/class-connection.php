@@ -49,6 +49,40 @@ final class Connection {
 	const HEALTH_BAD_CONSTANT = 'bad_constant';
 
 	/**
+	 * The WordPress address is not the one the connection was made on: a copy of
+	 * the site (staging, clone, backup restored elsewhere) or a moved site. Known
+	 * locally, never stored: the credential is not used while it holds.
+	 */
+	const HEALTH_COPY = 'copy';
+
+	/**
+	 * Option with the fingerprint (SHA-256) of an UPTIMEWIRE_TOKEN that was
+	 * disconnected but is still in wp-config.php: that value is not used again.
+	 */
+	const CONSTANT_OFF_OPTION = 'uptimewire_constant_off';
+
+	/**
+	 * Option remembering a disconnect UptimeWire did not confirm. No credential:
+	 * only what the administrator needs to find the connection in UptimeWire.
+	 */
+	const UNCONFIRMED_OPTION = 'uptimewire_unconfirmed';
+
+	/** Disconnect: UptimeWire confirmed that the credential no longer works. */
+	const REVOKED = 'revoked';
+
+	/** Disconnect: UptimeWire could not be asked or did not answer; the credential may still work there. */
+	const UNCONFIRMED = 'unconfirmed';
+
+	/** Disconnect: UptimeWire had already ended the connection. */
+	const ALREADY_ENDED = 'already_ended';
+
+	/** Disconnect: there was no usable credential to end. */
+	const NOTHING = 'nothing';
+
+	/** Disconnect: refused, the connection belongs to another website or WordPress address. */
+	const REFUSED = 'refused';
+
+	/**
 	 * The connection record without the credential, or null when there is none.
 	 *
 	 * Keys: id, connected_at, site_url (what UptimeWire monitors), local_url (this
@@ -57,6 +91,11 @@ final class Connection {
 	 * @return array<string, mixed>|null
 	 */
 	public static function get() {
+		if ( null === self::raw_constant() && false !== get_option( self::CONSTANT_OFF_OPTION, false ) ) {
+			// The disconnected UPTIMEWIRE_TOKEN was removed from wp-config.php.
+			delete_option( self::CONSTANT_OFF_OPTION );
+		}
+
 		$record = get_option( self::OPTION, null );
 
 		if ( ! is_array( $record ) ) {
@@ -111,7 +150,32 @@ final class Connection {
 	}
 
 	/**
-	 * The value of UPTIMEWIRE_TOKEN, or null when the constant is not defined.
+	 * The value of UPTIMEWIRE_TOKEN, or null when the constant is not defined or
+	 * holds a credential this site disconnected.
+	 *
+	 * @return string|null
+	 */
+	public static function configured_token() {
+		$value = self::raw_constant();
+
+		return null === $value || self::constant_left_behind() ? null : $value;
+	}
+
+	/**
+	 * Whether UPTIMEWIRE_TOKEN still holds a credential this site disconnected.
+	 * The plugin ignores it; only the administrator can remove it from wp-config.php.
+	 *
+	 * @return bool
+	 */
+	public static function constant_left_behind() {
+		$value = self::raw_constant();
+		$off   = get_option( self::CONSTANT_OFF_OPTION, '' );
+
+		return null !== $value && is_string( $off ) && '' !== $off && hash_equals( $off, hash( 'sha256', $value ) );
+	}
+
+	/**
+	 * The value of UPTIMEWIRE_TOKEN as this site sees it, or null.
 	 *
 	 * On a multisite network every site reads the same wp-config.php, but a
 	 * credential belongs to one website: the constant counts for the main site
@@ -119,7 +183,7 @@ final class Connection {
 	 *
 	 * @return string|null
 	 */
-	public static function configured_token() {
+	private static function raw_constant() {
 		if ( ! defined( self::TOKEN_CONSTANT ) || ( is_multisite() && ! is_main_site() ) ) {
 			return null;
 		}
@@ -127,6 +191,45 @@ final class Connection {
 		$value = constant( self::TOKEN_CONSTANT );
 
 		return is_string( $value ) ? trim( $value ) : '';
+	}
+
+	/**
+	 * Whether a record was made on another WordPress address than this one.
+	 *
+	 * The WordPress Site Address at the time of connecting is the identity of
+	 * the installation: a copy keeps the database, and so the "Website to
+	 * monitor" option, but not the address. Differences that mean the same
+	 * address (http or https, a trailing slash, the case of the host) are
+	 * allowed; "www." and the path are not.
+	 *
+	 * @param array<string, mixed> $record Record from get().
+	 * @return bool
+	 */
+	public static function is_copy( array $record ) {
+		if ( isset( $record['home'] ) && is_string( $record['home'] ) && '' !== $record['home'] ) {
+			return ! Site_Match::matches_any( $record['home'], array( home_url( '/' ) ) );
+		}
+
+		// Connected before the WordPress address was recorded: the address chosen then must still be this site's.
+		$local = isset( $record['local_url'] ) && is_string( $record['local_url'] ) ? $record['local_url'] : '';
+
+		return '' !== $local && ! Site_Match::matches_any( $local, Plugin::own_urls() );
+	}
+
+	/**
+	 * The WordPress address the record was made on, for messages.
+	 *
+	 * @param array<string, mixed> $record Record from get().
+	 * @return string
+	 */
+	public static function recorded_home( array $record ) {
+		foreach ( array( 'home', 'local_url' ) as $key ) {
+			if ( isset( $record[ $key ] ) && is_string( $record[ $key ] ) && '' !== $record[ $key ] ) {
+				return $record[ $key ];
+			}
+		}
+
+		return '';
 	}
 
 	/**
@@ -147,6 +250,8 @@ final class Connection {
 		update_option( self::OPTION, $record, false );
 		// Data kept for an earlier connection is not this one's.
 		Status::forget();
+		// UptimeWire keeps one connection per website: a new one ends the one whose disconnect was not confirmed.
+		delete_option( self::UNCONFIRMED_OPTION );
 	}
 
 	/**
@@ -156,8 +261,17 @@ final class Connection {
 	 * @return string One of the HEALTH_* constants, or '' when never checked.
 	 */
 	public static function health_state( array $record ) {
+		if ( self::is_copy( $record ) ) {
+			return self::HEALTH_COPY;
+		}
+
 		if ( null !== self::configured_token() && '' === self::token() ) {
 			return self::HEALTH_BAD_CONSTANT;
+		}
+
+		if ( isset( $record['id'] ) && '' === self::token() ) {
+			// The credential is gone (ended in UptimeWire, or UPTIMEWIRE_TOKEN removed from wp-config.php).
+			return self::HEALTH_ENDED;
 		}
 
 		return isset( $record['health']['state'] ) && is_string( $record['health']['state'] ) ? $record['health']['state'] : '';
@@ -177,8 +291,19 @@ final class Connection {
 	public static function confirm( $site_url, $account_label ) {
 		$stored = get_option( self::OPTION, array() );
 		$stored = is_array( $stored ) ? $stored : array();
-		$local  = isset( $stored['local_url'] ) && is_string( $stored['local_url'] ) ? $stored['local_url'] : '';
-		$same   = Site_Match::matches_any( $site_url, Plugin::own_urls() ) && Site_Match::matches_any( $local, Plugin::own_urls() );
+
+		if ( ! isset( $stored['id'] ) && null === self::configured_token() ) {
+			// Disconnected while UptimeWire was answering: nothing is written back.
+			return false;
+		}
+
+		$local = isset( $stored['local_url'] ) && is_string( $stored['local_url'] ) ? $stored['local_url'] : '';
+		$same  = ! self::is_copy( $stored ) && Site_Match::matches_any( $site_url, Plugin::own_urls() ) && Site_Match::matches_any( $local, Plugin::own_urls() );
+
+		if ( $same && empty( $stored['home'] ) ) {
+			// A connection made before the WordPress address was recorded.
+			$stored['home'] = home_url( '/' );
+		}
 
 		$stored['site_url'] = $site_url;
 		$stored['health']   = array(
@@ -241,7 +366,8 @@ final class Connection {
 		$record = self::get();
 		$token  = self::token();
 
-		if ( null === $record || '' === $token || self::HEALTH_ENDED === self::health_state( $record ) ) {
+		if ( null === $record || '' === $token || in_array( self::health_state( $record ), array( self::HEALTH_ENDED, self::HEALTH_COPY ), true ) ) {
+			// A copy never sends the original site's credential.
 			return;
 		}
 
@@ -276,11 +402,18 @@ final class Connection {
 				$stored['id']           = $data['id'];
 				$stored['connected_at'] = isset( $data['connected_at'] ) && is_string( $data['connected_at'] ) ? $data['connected_at'] : '';
 				$stored['local_url']    = Plugin::site_url();
+				$stored['home']         = home_url( '/' );
 				$stored['connected_by'] = 0;
 			}
 
-			$local                  = isset( $stored['local_url'] ) && is_string( $stored['local_url'] ) ? $stored['local_url'] : '';
-			$same                   = Site_Match::matches_any( $data['site']['url'], Plugin::own_urls() ) && Site_Match::matches_any( $local, Plugin::own_urls() );
+			$local = isset( $stored['local_url'] ) && is_string( $stored['local_url'] ) ? $stored['local_url'] : '';
+			$same  = ! self::is_copy( $stored ) && Site_Match::matches_any( $data['site']['url'], Plugin::own_urls() ) && Site_Match::matches_any( $local, Plugin::own_urls() );
+
+			if ( $same && empty( $stored['home'] ) ) {
+				// A connection made before the WordPress address was recorded.
+				$stored['home'] = home_url( '/' );
+			}
+
 			$health['state']        = $same ? self::HEALTH_OK : self::HEALTH_MISMATCH;
 			$health['confirmed_at'] = time();
 		} elseif ( 401 === $answer['status'] ) {
@@ -299,5 +432,144 @@ final class Connection {
 		}
 
 		Lock::release( 'health' );
+	}
+
+	/**
+	 * Whether this site may end its connection in UptimeWire.
+	 *
+	 * Only the installation the connection was made on, and only while
+	 * UptimeWire names this website: a copy must never end the original's.
+	 *
+	 * @param array<string, mixed> $record Record from get().
+	 * @return bool
+	 */
+	public static function may_end_remotely( array $record ) {
+		return ! in_array( self::health_state( $record ), array( self::HEALTH_COPY, self::HEALTH_MISMATCH ), true );
+	}
+
+	/**
+	 * Disconnects this site: ends the credential in UptimeWire (BE-1, RFC 7009),
+	 * then forgets everything local, whatever UptimeWire answered.
+	 *
+	 * Only the credential's access from WordPress ends. The website, its
+	 * monitoring, alerts and history stay in UptimeWire.
+	 *
+	 * @return array{remote: string, constant: bool} remote: REVOKED, UNCONFIRMED,
+	 *         ALREADY_ENDED, NOTHING or REFUSED; constant: whether UPTIMEWIRE_TOKEN
+	 *         stays in wp-config.php and must be removed by hand.
+	 */
+	public static function disconnect() {
+		$record = self::get();
+
+		if ( null === $record ) {
+			// Already disconnected (a second click, another tab): only leftovers are cleared.
+			self::forget_local();
+
+			return array(
+				'remote'   => self::NOTHING,
+				'constant' => self::constant_left_behind(),
+			);
+		}
+
+		if ( ! self::may_end_remotely( $record ) ) {
+			return array(
+				'remote'   => self::REFUSED,
+				'constant' => false,
+			);
+		}
+
+		$token  = self::token();
+		$remote = self::NOTHING;
+
+		if ( self::HEALTH_ENDED === self::health_state( $record ) ) {
+			$remote = self::ALREADY_ENDED;
+		} elseif ( '' !== $token ) {
+			// RFC 7009: 200 for any credential, so a 200 means it no longer works, whether it did before or not.
+			$answer = Api::post( '/wp/v1/revoke', array( 'token' => $token ), '', Api::TIMEOUT );
+			$remote = 200 === $answer['status'] ? self::REVOKED : self::UNCONFIRMED;
+		}
+
+		$constant = null !== self::configured_token();
+
+		self::forget_local();
+
+		if ( self::UNCONFIRMED === $remote ) {
+			update_option(
+				self::UNCONFIRMED_OPTION,
+				array(
+					'site_url'      => isset( $record['site_url'] ) && is_string( $record['site_url'] ) ? $record['site_url'] : Plugin::site_url(),
+					'account_label' => isset( $record['account_label'] ) ? (string) Status_Data::account_label( $record['account_label'] ) : '',
+					'at'            => time(),
+				),
+				false
+			);
+		}
+
+		return array(
+			'remote'   => $remote,
+			'constant' => $constant,
+		);
+	}
+
+	/**
+	 * Removes the connection from this installation only, without asking
+	 * UptimeWire: for a copy, or a connection UptimeWire says is another website's.
+	 * The original installation keeps its connection.
+	 *
+	 * @return bool Whether UPTIMEWIRE_TOKEN stays in wp-config.php and must be removed by hand.
+	 */
+	public static function remove_local() {
+		$constant = null !== self::configured_token();
+
+		self::forget_local();
+
+		return $constant;
+	}
+
+	/**
+	 * A disconnect UptimeWire did not confirm, or null.
+	 *
+	 * @return array{site_url: string, account_label: string, at: int}|null
+	 */
+	public static function unconfirmed() {
+		$stored = get_option( self::UNCONFIRMED_OPTION, null );
+
+		if ( ! is_array( $stored ) || ! isset( $stored['site_url'], $stored['at'] ) ) {
+			return null;
+		}
+
+		return array(
+			'site_url'      => (string) $stored['site_url'],
+			'account_label' => isset( $stored['account_label'] ) ? (string) $stored['account_label'] : '',
+			'at'            => (int) $stored['at'],
+		);
+	}
+
+	/**
+	 * Forgets the notice of an unconfirmed disconnect.
+	 *
+	 * @return void
+	 */
+	public static function dismiss_unconfirmed() {
+		delete_option( self::UNCONFIRMED_OPTION );
+	}
+
+	/**
+	 * Deletes the credential, the kept status and any authorization in progress.
+	 * A credential in wp-config.php can't be deleted: its fingerprint is kept so
+	 * that it is not used again until the administrator removes or changes it.
+	 *
+	 * @return void
+	 */
+	private static function forget_local() {
+		$constant = self::configured_token();
+
+		if ( null !== $constant ) {
+			update_option( self::CONSTANT_OFF_OPTION, hash( 'sha256', $constant ), false );
+		}
+
+		delete_option( self::OPTION );
+		Status::forget();
+		Authorization::reset();
 	}
 }

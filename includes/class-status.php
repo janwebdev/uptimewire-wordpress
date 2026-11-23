@@ -181,7 +181,8 @@ final class Status {
 		$record = Connection::get();
 		$token  = Connection::token();
 
-		if ( null === $record || ! isset( $record['id'] ) || '' === $token || Connection::HEALTH_ENDED === Connection::health_state( $record ) ) {
+		if ( null === $record || ! isset( $record['id'] ) || '' === $token || in_array( Connection::health_state( $record ), array( Connection::HEALTH_ENDED, Connection::HEALTH_COPY ), true ) ) {
+			// A copy never reads with the original site's credential.
 			return self::NOT_CONNECTED;
 		}
 
@@ -223,6 +224,15 @@ final class Status {
 	 * @return string
 	 */
 	private static function store( array $answer ) {
+		// The copy read at the start of this request may be older than a disconnect in another one.
+		wp_cache_delete( Connection::OPTION, 'options' );
+		wp_cache_delete( 'notoptions', 'options' );
+
+		if ( null === Connection::get() ) {
+			// Disconnected while UptimeWire was answering: nothing is kept.
+			return self::NOT_CONNECTED;
+		}
+
 		$status = self::get();
 		$now    = time();
 		$keep   = array(

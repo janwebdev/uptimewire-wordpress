@@ -26,6 +26,7 @@ final class State {
 	const CONNECTION_ESTABLISHED = 'connection_established';
 	const CONNECTION_ERROR       = 'connection_error';
 	const RECONNECTION_REQUIRED  = 'reconnection_required';
+	const SITE_COPY              = 'site_copy';
 
 	/**
 	 * The current state.
@@ -60,6 +61,8 @@ final class State {
 		}
 
 		switch ( Connection::health_state( $record ) ) {
+			case Connection::HEALTH_COPY:
+				return self::SITE_COPY;
 			case Connection::HEALTH_ENDED:
 				return self::RECONNECTION_REQUIRED;
 			case Connection::HEALTH_MISMATCH:
@@ -86,7 +89,8 @@ final class State {
 			self::AUTHORIZATION_DENIED   => __( 'Authorization Denied', 'uptimewire' ),
 			self::CONNECTION_ESTABLISHED => __( 'Connection Established', 'uptimewire' ),
 			self::CONNECTION_ERROR       => __( 'Connection Error', 'uptimewire' ),
-			self::RECONNECTION_REQUIRED  => __( 'Reconnection Required', 'uptimewire' ),
+			self::RECONNECTION_REQUIRED  => __( 'Connection No Longer Active', 'uptimewire' ),
+			self::SITE_COPY              => __( 'Copied or Moved Site', 'uptimewire' ),
 		);
 
 		return isset( $labels[ $state ] ) ? $labels[ $state ] : $labels[ self::NOT_CONNECTED ];

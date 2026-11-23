@@ -632,7 +632,7 @@ final class ConnectFlowTest extends Test_Case {
 	}
 
 	/**
-	 * Scenario 18c: a stored connection whose website no longer matches this site (a copy) shows no data and offers no reconnect.
+	 * Scenario 18c: a stored connection made on another address (a copy) shows no data, sends nothing and offers no reconnect.
 	 *
 	 * @return void
 	 */
@@ -653,9 +653,10 @@ final class ConnectFlowTest extends Test_Case {
 
 		Connection::check_health( true );
 
-		$this->assertSame( State::CONNECTION_ERROR, State::current() );
+		$this->assertSame( State::SITE_COPY, State::current() );
+		$this->assertSame( array(), Fake_Api::calls(), 'A copy never sends the original site’s credential.' );
 		$html = self::render( array( Overview_Page::class, 'render' ) );
-		$this->assertStringContainsString( 'This connection belongs to https://www.customer-site.com.', $html );
+		$this->assertStringContainsString( 'This WordPress Site Is a Copy', $html );
 		$this->assertStringNotContainsString( 'Reconnect', $html );
 		$this->assertSame( 'already_connected', Authorization::start( 1, false )['error'], 'A copy does not take the connection away from the original site.' );
 	}
@@ -692,7 +693,7 @@ final class ConnectFlowTest extends Test_Case {
 		$this->assertSame( State::RECONNECTION_REQUIRED, State::current() );
 		$this->assertSame( '', Connection::token(), 'A dead credential is forgotten.' );
 		$html = self::render( array( Overview_Page::class, 'render' ) );
-		$this->assertStringContainsString( 'The UptimeWire connection ended.', $html );
+		$this->assertStringContainsString( 'connection to UptimeWire is no longer active', $html );
 		$this->assertStringContainsString( 'Reconnect', $html );
 
 		Connection::check_health( true );

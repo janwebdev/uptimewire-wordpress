@@ -26,28 +26,67 @@ final class Plugin {
 	const WEBSITE_URL = 'https://uptimewire.com/';
 
 	/**
-	 * Capability required for every UptimeWire screen and action.
+	 * Capability required to see the monitoring data: the Overview and Settings
+	 * screens, the Dashboard widget, Site Health and the status refresh.
 	 *
 	 * @return string
 	 */
 	public static function capability() {
 		/**
-		 * Filters the capability required to see and use UptimeWire screens.
+		 * Filters the capability required to see UptimeWire's monitoring data.
+		 *
+		 * Viewing only: connecting, disconnecting and changing the website need
+		 * the capability of the "uptimewire_manage_capability" filter as well.
 		 *
 		 * @param string $capability Default 'manage_options'.
 		 */
-		$capability = apply_filters( 'uptimewire_capability', 'manage_options' );
-
-		return ( is_string( $capability ) && '' !== $capability ) ? $capability : 'manage_options';
+		return self::usable( apply_filters( 'uptimewire_capability', 'manage_options' ) );
 	}
 
 	/**
-	 * Whether the current user may use the plugin.
+	 * Capability required to manage the connection: connect, reconnect,
+	 * disconnect, remove a copied connection and change the website to monitor.
+	 *
+	 * @return string
+	 */
+	public static function manage_capability() {
+		/**
+		 * Filters the capability required to manage the UptimeWire connection.
+		 *
+		 * A user needs this capability and the viewing one ("uptimewire_capability").
+		 *
+		 * @param string $capability Default 'manage_options'.
+		 */
+		return self::usable( apply_filters( 'uptimewire_manage_capability', 'manage_options' ) );
+	}
+
+	/**
+	 * Whether the current user may see the monitoring data.
 	 *
 	 * @return bool
 	 */
-	public static function current_user_can() {
+	public static function can_view() {
 		return current_user_can( self::capability() );
+	}
+
+	/**
+	 * Whether the current user may manage the connection. Managing includes
+	 * seeing, so a wider viewing capability never widens who manages.
+	 *
+	 * @return bool
+	 */
+	public static function can_manage() {
+		return self::can_view() && current_user_can( self::manage_capability() );
+	}
+
+	/**
+	 * A filtered capability, or 'manage_options' when the filter gave nothing usable.
+	 *
+	 * @param mixed $capability Filter result.
+	 * @return string
+	 */
+	private static function usable( $capability ) {
+		return ( is_string( $capability ) && '' !== $capability ) ? $capability : 'manage_options';
 	}
 
 	/**
@@ -106,6 +145,18 @@ final class Plugin {
 		}
 
 		return $url;
+	}
+
+	/**
+	 * URL of the Settings screen.
+	 *
+	 * @param string $notice Message code for the screen, or ''.
+	 * @return string
+	 */
+	public static function settings_url( $notice = '' ) {
+		$url = admin_url( 'admin.php?page=uptimewire-settings' );
+
+		return '' !== $notice ? add_query_arg( 'uptimewire_notice', $notice, $url ) : $url;
 	}
 
 	/**

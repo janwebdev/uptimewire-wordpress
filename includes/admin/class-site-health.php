@@ -48,12 +48,17 @@ final class Site_Health {
 	 * @return array<string, mixed>
 	 */
 	public static function tests( $tests ) {
-		if ( ! is_array( $tests ) || ! Plugin::current_user_can() || null === Connection::get() ) {
+		if ( ! is_array( $tests ) || ! Plugin::can_view() ) {
 			return $tests;
 		}
 
-		$state = State::current();
-		$add   = array();
+		$add = array();
+
+		if ( null !== Connection::unconfirmed() ) {
+			$add['disconnect'] = __( 'UptimeWire disconnect', 'uptimewire' );
+		}
+
+		$state = null === Connection::get() ? State::NOT_CONNECTED : State::current();
 
 		if ( State::CONNECTION_ESTABLISHED === $state ) {
 			$add['connection'] = __( 'UptimeWire connection', 'uptimewire' );
@@ -64,14 +69,15 @@ final class Site_Health {
 				if ( in_array( $data['ssl']['state'], array( 'ok', 'problem' ), true ) ) {
 					$add['ssl'] = __( 'SSL certificate (UptimeWire)', 'uptimewire' );
 				}
-				if ( in_array( $data['domain']['state'], array( 'ok', 'problem' ), true ) ) {
+				if ( null !== self::domain_verdict( $data['domain'] ) ) {
+					// An unknown expiration date is neither a pass nor a problem: it is in Info, not here.
 					$add['domain'] = __( 'Domain expiration (UptimeWire)', 'uptimewire' );
 				}
 				if ( null !== self::access_result() ) {
 					$add['access'] = __( 'UptimeWire can reach the website', 'uptimewire' );
 				}
 			}
-		} elseif ( in_array( $state, array( State::RECONNECTION_REQUIRED, State::CONNECTION_ERROR ), true ) && null === \UptimeWire\Authorization::outcome() ) {
+		} elseif ( in_array( $state, array( State::RECONNECTION_REQUIRED, State::CONNECTION_ERROR, State::SITE_COPY ), true ) && null === \UptimeWire\Authorization::outcome() ) {
 			// A connection that stopped working. An attempt in progress or just failed is not reported.
 			$add['connection'] = __( 'UptimeWire connection', 'uptimewire' );
 		}
@@ -112,11 +118,23 @@ final class Site_Health {
 			return self::result(
 				'connection',
 				'recommended',
-				__( 'The UptimeWire connection has ended', 'uptimewire' ),
+				__( 'The UptimeWire connection is no longer active', 'uptimewire' ),
 				array(
-					__( 'The connection was removed in UptimeWire, or the website was deleted there, so WordPress can’t show monitoring results. This is not a problem with your website.', 'uptimewire' ),
+					__( 'WordPress can’t show monitoring results until the site is reconnected. UptimeWire doesn’t tell WordPress why the connection ended. This is not a problem with your website.', 'uptimewire' ),
 				),
 				self::link( Plugin::overview_url(), __( 'Reconnect', 'uptimewire' ) )
+			);
+		}
+
+		if ( State::SITE_COPY === $state ) {
+			return self::result(
+				'connection',
+				'recommended',
+				__( 'This site has a copied UptimeWire connection', 'uptimewire' ),
+				array(
+					__( 'The connection stored here was made on another WordPress address, so this site is a copy or moved. It doesn’t use the connection or show its monitoring data.', 'uptimewire' ),
+				),
+				self::link( Plugin::overview_url(), __( 'View Connection', 'uptimewire' ) )
 			);
 		}
 
@@ -270,24 +288,51 @@ final class Site_Health {
 		$data   = Status::data();
 		$domain = null === $data ? array( 'state' => 'unknown' ) : $data['domain'];
 
-		if ( 'ok' === $domain['state'] ) {
-			return ! empty( $domain['expiry_known'] )
-				? self::result( 'domain', 'good', __( 'Your domain registration is current', 'uptimewire' ), array( self::expiry_line( $domain ), self::as_of( $domain ) ) )
-				: self::result( 'domain', 'good', __( 'The domain expiration date isn’t available', 'uptimewire' ), array( __( 'The domain registry doesn’t publish it, so UptimeWire can’t warn before the domain expires. Check the date with your domain registrar.', 'uptimewire' ), self::as_of( $domain ) ) );
+		switch ( self::domain_verdict( $domain ) ) {
+			case 'expired':
+				return self::result( 'domain', 'critical', __( 'Your domain registration has expired', 'uptimewire' ), array( __( 'Renew the domain with your registrar before someone else can register it.', 'uptimewire' ), self::expiry_line( $domain ), self::as_of( $domain ) ), self::details( $data ) );
+			case 'expires_soon':
+				return self::result( 'domain', 'recommended', __( 'Your domain expires soon', 'uptimewire' ), array( self::expiry_line( $domain ), __( 'Renew it with your registrar, or check that automatic renewal is on.', 'uptimewire' ), self::as_of( $domain ) ), self::details( $data ) );
+			default:
+				return self::result( 'domain', 'good', __( 'Your domain registration is current', 'uptimewire' ), array( self::expiry_line( $domain ), self::as_of( $domain ) ) );
 		}
+	}
 
+	/**
+	 * What UptimeWire verified about the domain expiration: 'current', 'expires_soon',
+	 * 'expired', or null when the date is unknown (not published, or the lookup failed).
+	 *
+	 * @param array<string, mixed> $domain Domain check of the kept data.
+	 * @return string|null
+	 */
+	private static function domain_verdict( array $domain ) {
 		$warning = isset( $domain['warning'] ) ? $domain['warning'] : null;
 
-		if ( 'expired' === $warning ) {
-			return self::result( 'domain', 'critical', __( 'Your domain registration has expired', 'uptimewire' ), array( __( 'Renew the domain with your registrar before someone else can register it.', 'uptimewire' ), self::expiry_line( $domain ), self::as_of( $domain ) ), self::details( $data ) );
+		if ( in_array( $warning, array( 'expired', 'expires_soon' ), true ) ) {
+			return $warning;
 		}
 
-		if ( 'expires_soon' === $warning ) {
-			return self::result( 'domain', 'recommended', __( 'Your domain expires soon', 'uptimewire' ), array( self::expiry_line( $domain ), __( 'Renew it with your registrar, or check that automatic renewal is on.', 'uptimewire' ), self::as_of( $domain ) ), self::details( $data ) );
-		}
+		return 'ok' === $domain['state'] && ! empty( $domain['expiry_known'] ) ? 'current' : null;
+	}
 
-		// A failed lookup is about the registry, not the website.
-		return self::result( 'domain', 'good', __( 'UptimeWire couldn’t look up the domain expiration date', 'uptimewire' ), array( __( 'This is usually a temporary problem of the domain registry. It doesn’t affect your website.', 'uptimewire' ), self::as_of( $domain ) ), self::details( $data ) );
+	/**
+	 * Did UptimeWire confirm the last disconnect?
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function test_disconnect() {
+		$unconfirmed = Connection::unconfirmed();
+
+		return self::result(
+			'disconnect',
+			'recommended',
+			__( 'UptimeWire didn’t confirm the last disconnect', 'uptimewire' ),
+			array(
+				/* translators: %s: website address. */
+				sprintf( __( 'WordPress no longer keeps the credential, but the connection of %s may still be active in UptimeWire. Remove it there, or it ends by itself after 90 days without use.', 'uptimewire' ), null === $unconfirmed ? '' : $unconfirmed['site_url'] ),
+			),
+			self::link( Overview_Page::CONNECTIONS, __( 'Open Connected WordPress Sites', 'uptimewire' ), true )
+		);
 	}
 
 	/**
@@ -349,7 +394,7 @@ final class Site_Health {
 	 * @return array<string, mixed>
 	 */
 	public static function info( $info ) {
-		if ( ! is_array( $info ) || ! Plugin::current_user_can() ) {
+		if ( ! is_array( $info ) || ! Plugin::can_view() ) {
 			return $info;
 		}
 
@@ -374,7 +419,8 @@ final class Site_Health {
 			),
 		);
 
-		if ( null !== $record ) {
+		if ( null !== $record && State::SITE_COPY !== $state ) {
+			// A copy shows nothing of the connection it carries: not even the account number.
 			$label     = Connection::account_label();
 			$connected = ! empty( $record['connected_at'] ) ? strtotime( (string) $record['connected_at'] ) : false;
 
@@ -422,6 +468,12 @@ final class Site_Health {
 				'label' => __( 'Website checks', 'uptimewire' ),
 				'value' => sprintf( 'SSL: %1$s; domain: %2$s; DNS: %3$s', $data['ssl']['state'], $data['domain']['state'], $data['dns']['state'] ),
 			);
+			$fields['domain']     = array(
+				'label' => __( 'Domain expiration date', 'uptimewire' ),
+				'value' => null === self::domain_verdict( $data['domain'] )
+					? __( 'Unavailable — the registry does not provide a reliable expiration date', 'uptimewire' )
+					: self::expiry_line( $data['domain'] ),
+			);
 		}
 
 		$info[ self::SECTION ] = array(
@@ -443,8 +495,9 @@ final class Site_Health {
 	private static function error_category( $record, $status ) {
 		$health = null === $record ? '' : Connection::health_state( $record );
 		$words  = array(
-			Connection::HEALTH_ENDED        => __( 'Connection ended in UptimeWire', 'uptimewire' ),
+			Connection::HEALTH_ENDED        => __( 'Connection no longer active', 'uptimewire' ),
 			Connection::HEALTH_MISMATCH     => __( 'Website address mismatch', 'uptimewire' ),
+			Connection::HEALTH_COPY         => __( 'Connection made on another WordPress address (copied or moved site)', 'uptimewire' ),
 			Connection::HEALTH_BAD_CONSTANT => __( 'Invalid UPTIMEWIRE_TOKEN', 'uptimewire' ),
 			Connection::HEALTH_UNREACHABLE  => __( 'UptimeWire unreachable', 'uptimewire' ),
 			Status::UNREACHABLE             => __( 'UptimeWire unreachable', 'uptimewire' ),
@@ -572,7 +625,7 @@ final class Site_Health {
 	private static function monitored_url() {
 		$record = Connection::get();
 
-		if ( null === $record || Connection::HEALTH_MISMATCH === Connection::health_state( $record ) || ! isset( $record['site_url'] ) || ! is_string( $record['site_url'] ) ) {
+		if ( null === $record || ! Connection::may_end_remotely( $record ) || ! isset( $record['site_url'] ) || ! is_string( $record['site_url'] ) ) {
 			return Plugin::site_url();
 		}
 

@@ -309,7 +309,7 @@ final class WidgetTest extends Test_Case {
 	}
 
 	/**
-	 * A revoked connection: "Connection Expired" with Reconnect.
+	 * A revoked connection: "Reconnect to UptimeWire" with Reconnect.
 	 *
 	 * @return void
 	 */
@@ -320,7 +320,7 @@ final class WidgetTest extends Test_Case {
 		$html = self::widget();
 
 		$this->assertSame( State::RECONNECTION_REQUIRED, State::current() );
-		$this->assertSame( 'Connection Expired', self::title( $html ) );
+		$this->assertSame( 'Reconnect to UptimeWire', self::title( $html ) );
 		$this->assertStringContainsString( 'Reconnect', $html );
 		$this->assertStringNotContainsString( 'Your Website Is Online', $html );
 	}
@@ -454,7 +454,7 @@ final class WidgetTest extends Test_Case {
 		Fake_Api::queue( '/wp/v1/status', 401, array( 'error' => 'connection_ended' ) );
 		$data = rest_do_request( $request )->get_data();
 		$this->assertArrayNotHasKey( 'redirect', $data );
-		$this->assertStringContainsString( 'Connection Expired', $data['html'] );
+		$this->assertStringContainsString( 'Reconnect to UptimeWire', $data['html'] );
 
 		$bad = new \WP_REST_Request( 'POST', '/' . Rest::NAMESPACE_V1 . '/status-refresh' );
 		$bad->set_param( 'view', '../../evil' );

@@ -390,7 +390,7 @@ final class DashboardTest extends Test_Case {
 		$this->assertNull( Status::get() );
 		$this->assertSame( Status::NOT_CONNECTED, Status::refresh( true ) );
 		$this->assertCount( 2, Fake_Api::calls( '/wp/v1/status' ), 'An ended connection is not asked again.' );
-		$this->assertStringContainsString( 'Reconnection Required', self::render( array( Overview_Page::class, 'render' ) ) );
+		$this->assertStringContainsString( 'Reconnect to UptimeWire', self::render( array( Overview_Page::class, 'render' ) ) );
 	}
 
 	/**

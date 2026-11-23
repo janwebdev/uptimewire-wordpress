@@ -3,7 +3,7 @@
  * Plugin Name:       UptimeWire – Website Uptime & SSL Monitoring
  * Plugin URI:        https://uptimewire.com/
  * Description:       Monitor your WordPress website from outside: uptime, SSL certificate, domain and DNS checks by UptimeWire.
- * Version:           0.4.0
+ * Version:           0.5.0
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            UptimeWire
@@ -18,7 +18,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'UPTIMEWIRE_VERSION', '0.4.0' );
+define( 'UPTIMEWIRE_VERSION', '0.5.0' );
 define( 'UPTIMEWIRE_FILE', __FILE__ );
 define( 'UPTIMEWIRE_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -36,6 +36,9 @@ require_once UPTIMEWIRE_DIR . 'includes/class-state.php';
 require_once UPTIMEWIRE_DIR . 'includes/class-proof.php';
 require_once UPTIMEWIRE_DIR . 'includes/class-rest.php';
 
+// No activation or deactivation hooks on purpose: the plugin schedules nothing, so deactivating only
+// stops it. The connection and the kept status stay, and reactivating needs no new connection.
+// Disconnecting is an explicit action in Settings; uninstall.php removes the data.
 \UptimeWire\Proof::init();
 \UptimeWire\Rest::init();
 

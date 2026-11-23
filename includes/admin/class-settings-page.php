@@ -29,7 +29,7 @@ final class Settings_Page {
 	 * @return void
 	 */
 	public static function render() {
-		if ( ! Plugin::current_user_can() ) {
+		if ( ! Plugin::can_view() ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'uptimewire' ), '', array( 'response' => 403 ) );
 		}
 
@@ -40,10 +40,19 @@ final class Settings_Page {
 		$status    = Status::get();
 		$data      = $connected ? Status::data() : null;
 		$stale     = null !== $data && Status::is_stale( $status );
+		$confirm   = isset( $_GET[ Admin::CONFIRM_ARG ] ) && 'disconnect' === $_GET[ Admin::CONFIRM_ARG ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only: the Disconnect form itself carries the nonce.
+
+		if ( $confirm && self::may_disconnect() ) {
+			self::render_confirm_disconnect();
+
+			return;
+		}
 		?>
 		<div class="wrap uptimewire uptimewire-settings">
 			<h1><?php esc_html_e( 'UptimeWire Settings', 'uptimewire' ); ?></h1>
 			<hr class="wp-header-end">
+
+			<?php Overview_Page::render_lifecycle_notices(); ?>
 
 			<?php if ( $stale ) : ?>
 				<div class="notice notice-info inline">
@@ -83,14 +92,19 @@ final class Settings_Page {
 	 * @return void
 	 */
 	private static function render_connection( $state, $record, $status, $data ) {
-		$label = null !== $record ? Connection::account_label() : '';
+		$manage = Plugin::can_manage();
 		?>
 		<h2><?php esc_html_e( 'Connection', 'uptimewire' ); ?></h2>
 		<table class="form-table uptimewire-summary" role="presentation">
 			<tbody>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Status', 'uptimewire' ); ?></th>
-					<td><?php Overview_Page::state_badge( $state ); ?></td>
+					<td>
+						<?php Overview_Page::state_badge( $state ); ?>
+						<?php if ( null !== $record ) : ?>
+							<span class="description"><?php echo esc_html( Overview_Page::health_text( $record ) ); ?></span>
+						<?php endif; ?>
+					</td>
 				</tr>
 				<?php if ( null === $record ) : ?>
 					<tr>
@@ -98,12 +112,6 @@ final class Settings_Page {
 						<td><span class="uptimewire-site-address"><?php echo esc_html( Plugin::site_url() ); ?></span></td>
 					</tr>
 				<?php else : ?>
-					<?php if ( '' !== $label ) : ?>
-						<tr>
-							<th scope="row"><?php esc_html_e( 'UptimeWire account', 'uptimewire' ); ?></th>
-							<td><span class="uptimewire-account"><?php echo esc_html( $label ); ?></span></td>
-						</tr>
-					<?php endif; ?>
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Last status received', 'uptimewire' ); ?></th>
 						<td>
@@ -131,10 +139,14 @@ final class Settings_Page {
 					Dashboard::link_button( null !== $data && null !== $data['links']['site'] ? $data['links']['site'] : Overview_Page::DASHBOARD, __( 'Open UptimeWire', 'uptimewire' ), false );
 					break;
 				case State::NOT_CONNECTED:
-					echo '<a class="button button-primary" href="' . esc_url( Plugin::overview_url() ) . '">' . esc_html__( 'Set Up Monitoring', 'uptimewire' ) . '</a>';
+					if ( $manage ) {
+						echo '<a class="button button-primary" href="' . esc_url( Plugin::overview_url() ) . '">' . esc_html__( 'Set Up Monitoring', 'uptimewire' ) . '</a>';
+					}
 					break;
 				case State::RECONNECTION_REQUIRED:
-					echo '<a class="button button-primary" href="' . esc_url( Plugin::overview_url() ) . '">' . esc_html__( 'Reconnect', 'uptimewire' ) . '</a>';
+					if ( $manage ) {
+						echo '<a class="button button-primary" href="' . esc_url( Plugin::overview_url() ) . '">' . esc_html__( 'Reconnect', 'uptimewire' ) . '</a>';
+					}
 					break;
 				default:
 					// Approval in progress, a failed attempt or a connection of another address: the Overview screen explains and offers the next step.
@@ -142,6 +154,55 @@ final class Settings_Page {
 			}
 			?>
 		</p>
+		<?php if ( self::may_disconnect() ) : ?>
+			<p class="uptimewire-disconnect">
+				<a class="button uptimewire-button-danger" href="<?php echo esc_url( add_query_arg( Admin::CONFIRM_ARG, 'disconnect', Plugin::settings_url() ) ); ?>"><?php esc_html_e( 'Disconnect', 'uptimewire' ); ?></a>
+				<span class="description"><?php esc_html_e( 'WordPress stops showing monitoring results. Monitoring and alerts in UptimeWire continue.', 'uptimewire' ); ?></span>
+			</p>
+		<?php elseif ( ! $manage && in_array( $state, array( State::NOT_CONNECTED, State::RECONNECTION_REQUIRED ), true ) ) : ?>
+			<p class="description"><?php esc_html_e( 'Only an administrator of this site can connect it to UptimeWire or change the connection.', 'uptimewire' ); ?></p>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Whether the current user may disconnect this site: a manager, and a
+	 * connection made on this WordPress site (a copy only removes its own).
+	 *
+	 * @return bool
+	 */
+	private static function may_disconnect() {
+		$record = Connection::get();
+
+		return Plugin::can_manage() && null !== $record && Connection::may_end_remotely( $record );
+	}
+
+	/**
+	 * Prints the confirmation of a disconnect. Nothing changes until the form is sent.
+	 *
+	 * @return void
+	 */
+	private static function render_confirm_disconnect() {
+		?>
+		<div class="wrap uptimewire uptimewire-settings">
+			<h1><?php esc_html_e( 'UptimeWire Settings', 'uptimewire' ); ?></h1>
+			<hr class="wp-header-end">
+			<div class="uptimewire-card uptimewire-confirm" role="group" aria-labelledby="uptimewire-confirm-title">
+				<h2 id="uptimewire-confirm-title"><?php esc_html_e( 'Disconnect UptimeWire?', 'uptimewire' ); ?></h2>
+				<p><?php esc_html_e( 'This WordPress website will stop displaying monitoring results.', 'uptimewire' ); ?></p>
+				<p><?php esc_html_e( 'UptimeWire will continue monitoring your website and sending configured alerts.', 'uptimewire' ); ?></p>
+				<p><?php esc_html_e( 'Your UptimeWire account, monitoring history, and website settings will remain unchanged.', 'uptimewire' ); ?></p>
+				<?php if ( null !== Connection::configured_token() ) : ?>
+					<p><strong><?php esc_html_e( 'The credential is in wp-config.php (UPTIMEWIRE_TOKEN). WordPress can’t edit that file: after disconnecting, remove that line yourself.', 'uptimewire' ); ?></strong></p>
+				<?php endif; ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="uptimewire-actions">
+					<input type="hidden" name="action" value="<?php echo esc_attr( Admin::DISCONNECT_ACTION ); ?>">
+					<?php wp_nonce_field( Admin::DISCONNECT_ACTION ); ?>
+					<a class="button" href="<?php echo esc_url( Plugin::settings_url() ); ?>"><?php esc_html_e( 'Cancel', 'uptimewire' ); ?></a>
+					<button type="submit" class="button button-primary uptimewire-button-danger"><?php esc_html_e( 'Disconnect', 'uptimewire' ); ?></button>
+				</form>
+			</div>
+		</div>
 		<?php
 	}
 

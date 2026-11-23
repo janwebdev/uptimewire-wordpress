@@ -2,13 +2,82 @@
 /**
  * Removes everything the plugin stored when it is deleted.
  *
- * Deletes every option and transient whose name starts with "uptimewire_".
- * On a multisite network it visits only the sites that have such options.
+ * First asks UptimeWire, once and briefly, to end the connection of each site
+ * that made its own (best effort: deleting the plugin never waits long or fails
+ * because UptimeWire can't be reached, and a copied site never ends the
+ * original's connection). Then deletes every option and transient whose name
+ * starts with "uptimewire_". On a multisite network it visits only the sites
+ * that have such options. The UptimeWire account, the monitored website and its
+ * history are not touched: they live in UptimeWire.
  *
  * @package UptimeWire
  */
 
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
+
+require_once __DIR__ . '/includes/class-site-match.php';
+
+/**
+ * Asks UptimeWire to end the current site's connection (BE-1 revoke, RFC 7009),
+ * if this installation made it and still holds its credential.
+ *
+ * @param float $budget Seconds left for all requests of this uninstall; reduced here.
+ * @return void
+ */
+function uptimewire_uninstall_revoke( &$budget ) {
+	$record = get_option( 'uptimewire_connection' );
+
+	if ( $budget < 1 || ! is_array( $record ) || ! isset( $record['id'] ) ) {
+		return;
+	}
+
+	// The WordPress address the connection was made on must be this one: a copy keeps the database, not the address.
+	if ( isset( $record['home'] ) && is_string( $record['home'] ) && '' !== $record['home'] ) {
+		$own = \UptimeWire\Site_Match::matches_any( $record['home'], array( home_url( '/' ) ) );
+	} else {
+		$saved = get_option( 'uptimewire_site_url', '' );
+		$own   = isset( $record['local_url'] ) && is_string( $record['local_url'] )
+			&& \UptimeWire\Site_Match::matches_any( $record['local_url'], array( is_string( $saved ) && '' !== $saved ? $saved : home_url( '/' ), home_url( '/' ) ) );
+	}
+
+	$health = isset( $record['health']['state'] ) ? $record['health']['state'] : '';
+
+	if ( ! $own || 'ended' === $health || 'mismatch' === $health ) {
+		return;
+	}
+
+	$token = isset( $record['token'] ) && is_string( $record['token'] ) ? $record['token'] : '';
+
+	if ( defined( 'UPTIMEWIRE_TOKEN' ) && ( ! is_multisite() || is_main_site() ) ) {
+		// The constant counts for the main site only, unless this site disconnected it already.
+		$value = is_string( UPTIMEWIRE_TOKEN ) ? trim( UPTIMEWIRE_TOKEN ) : '';
+		$off   = get_option( 'uptimewire_constant_off', '' );
+		$token = is_string( $off ) && '' !== $off && hash_equals( $off, hash( 'sha256', $value ) ) ? '' : $value;
+	}
+
+	if ( 1 !== preg_match( '/^uwp_[0-9a-f]{64}$/D', $token ) ) {
+		return;
+	}
+
+	$started = microtime( true );
+
+	// The address of UptimeWire\Api::BASE_URL; the answer is not needed: local data is deleted whatever it is.
+	wp_remote_post(
+		'https://api.uptimewire.com/wp/v1/revoke',
+		array(
+			'timeout'             => min( 3, (int) $budget ),
+			'redirection'         => 0,
+			'sslverify'           => true,
+			'reject_unsafe_urls'  => true,
+			'limit_response_size' => 4096,
+			'user-agent'          => 'UptimeWire-WordPress/uninstall; WordPress/' . get_bloginfo( 'version' ),
+			'headers'             => array( 'Accept' => 'application/json' ),
+			'body'                => array( 'token' => $token ),
+		)
+	);
+
+	$budget -= microtime( true ) - $started;
+}
 
 /**
  * Names of the plugin's rows in an options table.
@@ -98,6 +167,9 @@ function uptimewire_uninstall_network() {
 // WordPress includes this file from inside a function.
 global $wpdb;
 
+// At most ten seconds of requests in all, so that deleting the plugin on a large network still finishes.
+$uptimewire_budget = 10.0;
+
 if ( is_multisite() ) {
 	$uptimewire_site_ids = get_sites(
 		array(
@@ -115,11 +187,13 @@ if ( is_multisite() ) {
 		}
 
 		switch_to_blog( $uptimewire_site_id );
+		uptimewire_uninstall_revoke( $uptimewire_budget );
 		uptimewire_uninstall_delete( $uptimewire_names );
 		restore_current_blog();
 	}
 
 	uptimewire_uninstall_network();
 } else {
+	uptimewire_uninstall_revoke( $uptimewire_budget );
 	uptimewire_uninstall_delete( uptimewire_uninstall_option_names( $wpdb->options ) );
 }

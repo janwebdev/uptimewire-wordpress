@@ -29,13 +29,16 @@ final class Overview_Page {
 	/** The UptimeWire dashboard, with the source mark of the plugin. */
 	const DASHBOARD = 'https://app.uptimewire.com/?src=wp';
 
+	/** The list of WordPress sites connected to the UptimeWire account, where a connection can be removed. */
+	const CONNECTIONS = 'https://app.uptimewire.com/user/profile/wordpress';
+
 	/**
 	 * Prints the screen.
 	 *
 	 * @return void
 	 */
 	public static function render() {
-		if ( ! Plugin::current_user_can() ) {
+		if ( ! Plugin::can_view() ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'uptimewire' ), '', array( 'response' => 403 ) );
 		}
 
@@ -54,8 +57,20 @@ final class Overview_Page {
 			<hr class="wp-header-end">
 			<?php
 			self::render_result_notice();
+			self::render_lifecycle_notices();
+
+			if ( ! Plugin::can_manage() && State::CONNECTION_ESTABLISHED !== $state ) {
+				// Viewing only: the state is shown, the actions are not.
+				self::render_view_only( $state );
+				$state = '';
+			}
 
 			switch ( $state ) {
+				case '':
+					break;
+				case State::SITE_COPY:
+					self::render_copy();
+					break;
 				case State::AUTHORIZATION_PENDING:
 				case State::WAITING_FOR_APPROVAL:
 					self::render_waiting( $state );
@@ -319,15 +334,18 @@ final class Overview_Page {
 		Dashboard::render();
 		?>
 		<details class="uptimewire-connection-details">
-			<summary><?php esc_html_e( 'Connection details', 'uptimewire' ); ?></summary>
-			<p class="uptimewire-state-line"><?php self::state_badge( State::CONNECTION_ESTABLISHED ); ?></p>
+			<summary><?php esc_html_e( 'Connection Details', 'uptimewire' ); ?></summary>
+			<p class="uptimewire-state-line"><?php self::state_badge( State::CONNECTION_ESTABLISHED ); ?> <?php echo esc_html( self::health_text( $record ) ); ?></p>
 			<?php self::render_connection_table( $record ); ?>
+			<?php if ( Plugin::can_manage() ) : ?>
+				<p><a href="<?php echo esc_url( Plugin::settings_url() ); ?>"><?php esc_html_e( 'Manage or disconnect in Settings', 'uptimewire' ); ?></a></p>
+			<?php endif; ?>
 		</details>
 		<?php
 	}
 
 	/**
-	 * Prints the connection details: website, date, health.
+	 * Prints the connection details: website, account, date, where the credential is kept.
 	 *
 	 * @param array<string, mixed> $record Connection record.
 	 * @return void
@@ -335,6 +353,7 @@ final class Overview_Page {
 	public static function render_connection_table( array $record ) {
 		$user      = ! empty( $record['connected_by'] ) ? get_userdata( (int) $record['connected_by'] ) : false;
 		$connected = ! empty( $record['connected_at'] ) ? strtotime( (string) $record['connected_at'] ) : false;
+		$label     = Connection::account_label();
 		?>
 		<table class="form-table uptimewire-summary" role="presentation">
 			<tbody>
@@ -342,6 +361,12 @@ final class Overview_Page {
 					<th scope="row"><?php esc_html_e( 'Website', 'uptimewire' ); ?></th>
 					<td><span class="uptimewire-site-address"><?php echo esc_html( isset( $record['site_url'] ) ? (string) $record['site_url'] : Plugin::site_url() ); ?></span></td>
 				</tr>
+				<?php if ( '' !== $label ) : ?>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'UptimeWire account', 'uptimewire' ); ?></th>
+						<td><span class="uptimewire-account"><?php echo esc_html( $label ); ?></span></td>
+					</tr>
+				<?php endif; ?>
 				<?php if ( false !== $connected ) : ?>
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Connected', 'uptimewire' ); ?></th>
@@ -356,10 +381,6 @@ final class Overview_Page {
 						</td>
 					</tr>
 				<?php endif; ?>
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Connection', 'uptimewire' ); ?></th>
-					<td><?php echo esc_html( self::health_text( $record ) ); ?></td>
-				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Credential', 'uptimewire' ); ?></th>
 					<td>
@@ -383,7 +404,7 @@ final class Overview_Page {
 	 * @param array<string, mixed> $record Connection record.
 	 * @return string
 	 */
-	private static function health_text( array $record ) {
+	public static function health_text( array $record ) {
 		$confirmed = isset( $record['health']['confirmed_at'] ) ? (int) $record['health']['confirmed_at'] : 0;
 		$when      = $confirmed ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $confirmed ) : '';
 
@@ -407,16 +428,162 @@ final class Overview_Page {
 	 * @return void
 	 */
 	private static function render_reconnect() {
+		$label = Connection::account_label();
 		?>
 		<div class="uptimewire-card uptimewire-outcome">
 			<p class="uptimewire-state-line"><?php self::state_badge( State::RECONNECTION_REQUIRED ); ?></p>
-			<h2><?php esc_html_e( 'Reconnection Required', 'uptimewire' ); ?></h2>
-			<p><?php esc_html_e( 'The UptimeWire connection ended. It was removed in UptimeWire, or the website was deleted there.', 'uptimewire' ); ?></p>
+			<h2><?php esc_html_e( 'Reconnect to UptimeWire', 'uptimewire' ); ?></h2>
+			<p><?php esc_html_e( 'This site’s connection to UptimeWire is no longer active, so its monitoring results can’t be shown here. UptimeWire doesn’t tell WordPress why. For example, the connection may have been removed in UptimeWire, the website deleted there, or the connection unused for 90 days.', 'uptimewire' ); ?></p>
 			<?php if ( null !== Connection::configured_token() ) : ?>
 				<p><?php esc_html_e( 'Remove UPTIMEWIRE_TOKEN from wp-config.php, then reconnect from this screen.', 'uptimewire' ); ?></p>
 			<?php else : ?>
+				<?php if ( '' !== $label ) : ?>
+					<p>
+						<?php
+						/* translators: %s: UptimeWire account number, such as ACC-00001000. */
+						echo esc_html( sprintf( __( 'This site was connected to UptimeWire account %s. Approve the new connection in the same account to keep its monitoring history.', 'uptimewire' ), $label ) );
+						?>
+					</p>
+				<?php endif; ?>
 				<?php self::render_connect_form( Environment::warnings( wp_get_environment_type(), Plugin::site_url() ), __( 'Reconnect', 'uptimewire' ) ); ?>
 			<?php endif; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Prints the screen of a connection made on another WordPress address: a
+	 * copy of the site, or a site that moved. Nothing of the connection is used.
+	 *
+	 * @return void
+	 */
+	private static function render_copy() {
+		$record = Connection::get();
+
+		if ( null === $record ) {
+			return;
+		}
+		?>
+		<div class="uptimewire-card uptimewire-outcome uptimewire-copy">
+			<p class="uptimewire-state-line"><?php self::state_badge( State::SITE_COPY ); ?></p>
+			<h2><?php esc_html_e( 'This WordPress Site Is a Copy', 'uptimewire' ); ?></h2>
+			<p><?php esc_html_e( 'The existing UptimeWire connection belongs to another website.', 'uptimewire' ); ?></p>
+			<p>
+				<?php
+				/* translators: 1: WordPress address the connection was made on; 2: address of this WordPress site. */
+				echo esc_html( sprintf( __( 'It was made on %1$s, but this WordPress site is %2$s. To protect the original website, this copy doesn’t show its monitoring data and doesn’t use its credential.', 'uptimewire' ), Connection::recorded_home( $record ), home_url( '/' ) ) );
+				?>
+			</p>
+			<p><?php esc_html_e( 'Remove the copied connection from this installation to set up monitoring for this website. Only this WordPress site forgets it: the original website stays connected, and UptimeWire keeps monitoring it.', 'uptimewire' ); ?></p>
+			<?php self::render_remove_local_form( __( 'Remove Connection From This Copy', 'uptimewire' ) ); ?>
+			<details class="uptimewire-help">
+				<summary><?php esc_html_e( 'This site moved and isn’t a copy?', 'uptimewire' ); ?></summary>
+				<p><?php esc_html_e( 'Remove the connection here too, then connect again from the Overview screen. Connecting again replaces the old connection in UptimeWire, so do it only if the old site no longer uses it.', 'uptimewire' ); ?></p>
+				<p><?php esc_html_e( 'If UptimeWire still monitors the old address, change the website address in UptimeWire first, or choose to monitor this address as a new website while connecting.', 'uptimewire' ); ?></p>
+			</details>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Prints the form that removes the connection from this installation only.
+	 *
+	 * @param string $label   Button label.
+	 * @param bool   $primary Whether it is the main action of the screen.
+	 * @return void
+	 */
+	private static function render_remove_local_form( $label, $primary = true ) {
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="<?php echo esc_attr( Admin::REMOVE_LOCAL_ACTION ); ?>">
+			<?php wp_nonce_field( Admin::REMOVE_LOCAL_ACTION ); ?>
+			<p><button type="submit" class="button<?php echo $primary ? ' button-primary' : ''; ?>"><?php echo esc_html( $label ); ?></button></p>
+		</form>
+		<?php
+	}
+
+	/**
+	 * Prints the state for a user who may see the plugin but not manage the connection.
+	 *
+	 * @param string $state State constant.
+	 * @return void
+	 */
+	private static function render_view_only( $state ) {
+		$texts = array(
+			State::NOT_CONNECTED         => __( 'This website isn’t connected to UptimeWire yet.', 'uptimewire' ),
+			State::RECONNECTION_REQUIRED => __( 'This site’s connection to UptimeWire is no longer active, so its monitoring results can’t be shown here.', 'uptimewire' ),
+			State::SITE_COPY             => __( 'This WordPress site is a copy, or it moved: its UptimeWire connection was made on another address, so no monitoring results are shown here.', 'uptimewire' ),
+		);
+		?>
+		<div class="uptimewire-card uptimewire-outcome">
+			<p class="uptimewire-state-line"><?php self::state_badge( $state ); ?></p>
+			<p><?php echo esc_html( isset( $texts[ $state ] ) ? $texts[ $state ] : __( 'The connection to UptimeWire isn’t working right now, so no monitoring results are shown here.', 'uptimewire' ) ); ?></p>
+			<p><?php esc_html_e( 'Only an administrator of this site can connect it to UptimeWire or change the connection.', 'uptimewire' ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Prints the notices that outlive one screen: an unconfirmed disconnect, a
+	 * disconnected UPTIMEWIRE_TOKEN still in wp-config.php, a changed account.
+	 *
+	 * @return void
+	 */
+	public static function render_lifecycle_notices() {
+		$change = Plugin::can_manage() ? Authorization::take_account_change() : null;
+
+		if ( null !== $change ) {
+			wp_admin_notice(
+				/* translators: 1: UptimeWire account number of the new connection; 2: account number of the earlier one. */
+				esc_html( sprintf( __( 'This site is now connected to UptimeWire account %1$s. Before, it was connected to account %2$s. If that wasn’t intended, disconnect in Settings and connect again in the right account.', 'uptimewire' ), $change['to'], $change['from'] ) ),
+				array(
+					'type'               => 'warning',
+					'additional_classes' => array( 'inline' ),
+				)
+			);
+		}
+
+		if ( Connection::constant_left_behind() ) {
+			wp_admin_notice(
+				esc_html__( 'UPTIMEWIRE_TOKEN is still in wp-config.php. This site no longer uses it, but the file still holds the old credential: remove the line from wp-config.php. The plugin can’t edit that file.', 'uptimewire' ),
+				array(
+					'type'               => 'warning',
+					'additional_classes' => array( 'inline' ),
+				)
+			);
+		}
+
+		$unconfirmed = Connection::unconfirmed();
+
+		if ( null === $unconfirmed || ! Plugin::can_manage() ) {
+			return;
+		}
+		?>
+		<div class="notice notice-warning inline uptimewire-unconfirmed">
+			<p><strong><?php esc_html_e( 'UptimeWire didn’t confirm the disconnect', 'uptimewire' ); ?></strong></p>
+			<p>
+				<?php
+				/* translators: %s: date and time of the disconnect. */
+				echo esc_html( sprintf( __( 'This site was disconnected on %s, but UptimeWire couldn’t be reached to end the connection there. WordPress no longer keeps or uses the credential.', 'uptimewire' ), wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $unconfirmed['at'] ) ) );
+				?>
+			</p>
+			<p>
+				<?php
+				echo esc_html(
+					'' !== $unconfirmed['account_label']
+						/* translators: 1: website address; 2: UptimeWire account number. */
+						? sprintf( __( 'To end it for sure, remove the WordPress connection of %1$s in UptimeWire account %2$s, under My Profile › WordPress. Otherwise UptimeWire ends it by itself after 90 days without use. Connecting this website again also replaces it.', 'uptimewire' ), $unconfirmed['site_url'], $unconfirmed['account_label'] )
+						/* translators: %s: website address. */
+						: sprintf( __( 'To end it for sure, remove the WordPress connection of %s in UptimeWire, under My Profile › WordPress. Otherwise UptimeWire ends it by itself after 90 days without use. Connecting this website again also replaces it.', 'uptimewire' ), $unconfirmed['site_url'] )
+				);
+				?>
+			</p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="uptimewire-actions">
+				<?php View::external_link( self::CONNECTIONS, __( 'Open Connected WordPress Sites', 'uptimewire' ) ); ?>
+				<input type="hidden" name="action" value="<?php echo esc_attr( Admin::DISMISS_UNCONFIRMED_ACTION ); ?>">
+				<?php wp_nonce_field( Admin::DISMISS_UNCONFIRMED_ACTION ); ?>
+				<button type="submit" class="button-link"><?php esc_html_e( 'I removed it in UptimeWire', 'uptimewire' ); ?></button>
+			</form>
 		</div>
 		<?php
 	}
@@ -437,11 +604,10 @@ final class Overview_Page {
 				<p>
 					<?php
 					/* translators: 1: website address in UptimeWire; 2: address of this WordPress site. */
-					echo esc_html( sprintf( __( 'This connection belongs to %1$s. This site is %2$s, probably a copy of that site or a site that moved. Its monitoring data is not shown here.', 'uptimewire' ), (string) $record['site_url'], Plugin::site_url() ) );
+					echo esc_html( sprintf( __( 'UptimeWire says this connection belongs to %1$s, but this site is %2$s. The website address may have been changed in UptimeWire. Its monitoring data is not shown here.', 'uptimewire' ), (string) $record['site_url'], Plugin::site_url() ) );
 					?>
 				</p>
-				<p><?php esc_html_e( 'Don’t reconnect from a copy: that would move the connection away from the original site. If the site moved, change the website address in UptimeWire.', 'uptimewire' ); ?></p>
-				<p><?php esc_html_e( 'After you correct the website address in UptimeWire, check again.', 'uptimewire' ); ?></p>
+				<p><?php esc_html_e( 'If this site’s address is the right one, change the website address in UptimeWire, then check again.', 'uptimewire' ); ?></p>
 				<div class="uptimewire-actions">
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 						<input type="hidden" name="action" value="<?php echo esc_attr( Admin::REFRESH_ACTION ); ?>">
@@ -450,6 +616,8 @@ final class Overview_Page {
 					</form>
 					<?php View::external_link( self::DASHBOARD, __( 'Open UptimeWire', 'uptimewire' ) ); ?>
 				</div>
+				<p><?php esc_html_e( 'To stop using this connection here instead, remove it from this site. That doesn’t end it in UptimeWire: remove it there as well, under My Profile › WordPress.', 'uptimewire' ); ?></p>
+				<?php self::render_remove_local_form( __( 'Remove Connection From This Site', 'uptimewire' ), false ); ?>
 			<?php elseif ( Connection::HEALTH_BAD_CONSTANT === $health ) : ?>
 				<h2><?php esc_html_e( 'Connection Error', 'uptimewire' ); ?></h2>
 				<p><?php esc_html_e( 'UPTIMEWIRE_TOKEN in wp-config.php is not a valid UptimeWire credential. Correct it, or remove it and connect from this screen.', 'uptimewire' ); ?></p>
@@ -630,6 +798,11 @@ final class Overview_Page {
 					: __( 'UptimeWire asked to wait before the next update. Try again later.', 'uptimewire' ),
 			),
 			'status_failed'      => array( 'warning', __( 'Couldn’t get the latest status from UptimeWire. The screen shows the last status received, if any.', 'uptimewire' ) ),
+			'disconnected'       => array( 'success', __( 'WordPress is disconnected from UptimeWire. UptimeWire keeps monitoring your website and sending the alerts you set up. Your account, monitoring history and website settings are unchanged.', 'uptimewire' ) ),
+			'disconnect_unsure'  => array( 'warning', __( 'WordPress is disconnected from UptimeWire and no longer keeps the credential, but UptimeWire couldn’t be reached to confirm the end of the connection. See below how to make sure.', 'uptimewire' ) ),
+			'disconnect_refused' => array( 'error', __( 'This connection wasn’t made on this WordPress site, so it can’t be ended from here. Nothing was changed.', 'uptimewire' ) ),
+			'copy_removed'       => array( 'success', __( 'The connection was removed from this WordPress site only. The website it belongs to stays connected. You can now set up monitoring for this site.', 'uptimewire' ) ),
+			'site_url_locked'    => array( 'error', __( 'The website to monitor can’t be changed while this site has an UptimeWire connection. Nothing was changed.', 'uptimewire' ) ),
 		);
 
 		if ( ! isset( $notices[ $code ] ) ) {

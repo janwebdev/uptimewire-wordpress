@@ -8,6 +8,7 @@
 namespace UptimeWire\Admin;
 
 use UptimeWire\Authorization;
+use UptimeWire\Connection;
 use UptimeWire\Plugin;
 use UptimeWire\Rest;
 use UptimeWire\Site_Url;
@@ -44,6 +45,18 @@ final class Admin {
 
 	/** Form action and nonce action for reading the monitoring status now (without JavaScript). */
 	const REFRESH_ACTION = 'uptimewire_refresh';
+
+	/** Form action and nonce action for disconnecting this site from UptimeWire. */
+	const DISCONNECT_ACTION = 'uptimewire_disconnect';
+
+	/** Form action and nonce action for removing a copied connection from this installation only. */
+	const REMOVE_LOCAL_ACTION = 'uptimewire_remove_local';
+
+	/** Form action and nonce action for closing the notice of an unconfirmed disconnect. */
+	const DISMISS_UNCONFIRMED_ACTION = 'uptimewire_dismiss_unconfirmed';
+
+	/** Query argument of the Settings screen that shows the disconnect confirmation. */
+	const CONFIRM_ARG = 'uptimewire_confirm';
 
 	/** Query argument carrying the result message after a redirect. */
 	const NOTICE_ARG = 'uptimewire_notice';
@@ -83,6 +96,9 @@ final class Admin {
 		add_action( 'admin_post_' . self::CHECK_ACTION, array( __CLASS__, 'check' ) );
 		add_action( 'admin_post_' . self::DISMISS_ACTION, array( __CLASS__, 'dismiss' ) );
 		add_action( 'admin_post_' . self::REFRESH_ACTION, array( __CLASS__, 'refresh' ) );
+		add_action( 'admin_post_' . self::DISCONNECT_ACTION, array( __CLASS__, 'disconnect' ) );
+		add_action( 'admin_post_' . self::REMOVE_LOCAL_ACTION, array( __CLASS__, 'remove_local' ) );
+		add_action( 'admin_post_' . self::DISMISS_UNCONFIRMED_ACTION, array( __CLASS__, 'dismiss_unconfirmed' ) );
 		add_filter( 'removable_query_args', array( __CLASS__, 'removable_query_args' ) );
 	}
 
@@ -183,7 +199,8 @@ final class Admin {
 			return;
 		}
 
-		if ( ! in_array( $state, self::SCRIPT_STATES, true ) ) {
+		if ( ! in_array( $state, self::SCRIPT_STATES, true ) || ! Plugin::can_manage() ) {
+			// The connect script serves only those who may connect.
 			return;
 		}
 
@@ -272,7 +289,7 @@ final class Admin {
 	 * @return void
 	 */
 	public static function save_site_url() {
-		if ( ! Plugin::current_user_can() ) {
+		if ( ! Plugin::can_manage() ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to change this setting.', 'uptimewire' ), '', array( 'response' => 403 ) );
 		}
 
@@ -280,7 +297,10 @@ final class Admin {
 
 		$notice = 'site_url_reset';
 
-		if ( isset( $_POST['uptimewire_reset'] ) ) {
+		if ( null !== Connection::get() ) {
+			// The connection names its website in UptimeWire; changing it here would only make them disagree.
+			$notice = 'site_url_locked';
+		} elseif ( isset( $_POST['uptimewire_reset'] ) ) {
 			delete_option( Plugin::OPTION_SITE_URL );
 		} else {
 			// Site_Url::normalize() accepts only a well-formed http(s) address and returns '' for anything else.
@@ -360,7 +380,8 @@ final class Admin {
 	 * @return void
 	 */
 	public static function refresh() {
-		self::check_request( self::REFRESH_ACTION );
+		// Reading the status changes nothing: viewing is enough.
+		self::check_request( self::REFRESH_ACTION, false );
 		$result  = Status::refresh( true );
 		$notices = array(
 			Status::UPDATED       => 'status_refreshed',
@@ -379,13 +400,79 @@ final class Admin {
 	}
 
 	/**
+	 * Disconnects this site after the confirmation on the Settings screen.
+	 *
+	 * The user, the nonce and the installation are checked first; UptimeWire is
+	 * asked to end the credential; local data is cleared whatever it answered.
+	 * The next screen says honestly what happened.
+	 *
+	 * @return void
+	 */
+	public static function disconnect() {
+		self::check_request( self::DISCONNECT_ACTION );
+
+		$result = Connection::disconnect();
+
+		if ( Connection::REFUSED === $result['remote'] ) {
+			wp_safe_redirect( Plugin::overview_url( 'disconnect_refused' ) );
+			exit;
+		}
+
+		$notices = array(
+			Connection::REVOKED       => 'disconnected',
+			Connection::ALREADY_ENDED => 'disconnected',
+			Connection::NOTHING       => 'disconnected',
+			Connection::UNCONFIRMED   => 'disconnect_unsure',
+		);
+
+		wp_safe_redirect( Plugin::overview_url( $notices[ $result['remote'] ] ) );
+		exit;
+	}
+
+	/**
+	 * Removes a copied connection from this installation only. UptimeWire is not asked.
+	 *
+	 * @return void
+	 */
+	public static function remove_local() {
+		self::check_request( self::REMOVE_LOCAL_ACTION );
+
+		$record = Connection::get();
+
+		if ( null !== $record && Connection::may_end_remotely( $record ) ) {
+			// This installation's own connection is ended with Disconnect, so it ends in UptimeWire too.
+			wp_safe_redirect( Plugin::settings_url() );
+			exit;
+		}
+
+		Connection::remove_local();
+
+		wp_safe_redirect( Plugin::overview_url( 'copy_removed' ) );
+		exit;
+	}
+
+	/**
+	 * Closes the notice of a disconnect UptimeWire did not confirm.
+	 *
+	 * @return void
+	 */
+	public static function dismiss_unconfirmed() {
+		self::check_request( self::DISMISS_UNCONFIRMED_ACTION );
+		Connection::dismiss_unconfirmed();
+
+		wp_safe_redirect( Plugin::overview_url() );
+		exit;
+	}
+
+	/**
 	 * Stops a form request without the capability or a valid nonce.
 	 *
 	 * @param string $action Nonce action.
+	 * @param bool   $manage Whether the request changes the connection (otherwise it only reads).
 	 * @return void
 	 */
-	private static function check_request( $action ) {
-		if ( ! Plugin::current_user_can() ) {
+	private static function check_request( $action, $manage = true ) {
+		if ( ! ( $manage ? Plugin::can_manage() : Plugin::can_view() ) ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to change this setting.', 'uptimewire' ), '', array( 'response' => 403 ) );
 		}
 

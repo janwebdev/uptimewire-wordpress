@@ -641,3 +641,40 @@
 .uptimewire-outcome .uptimewire-actions {
 	align-items: center;
 }
+
+/* Disconnect: a destructive action, told apart by its words and a red edge, not by color alone. */
+.uptimewire-disconnect {
+	margin-top: 24px;
+}
+
+.uptimewire-disconnect .description {
+	display: block;
+	margin-top: 6px;
+}
+
+.uptimewire .button.uptimewire-button-danger:not(.button-primary) {
+	color: #b32d2e;
+	border-color: #b32d2e;
+}
+
+.uptimewire .button.button-primary.uptimewire-button-danger {
+	background: #b32d2e;
+	border-color: #b32d2e;
+	color: #fff;
+}
+
+.uptimewire .button.uptimewire-button-danger:hover,
+.uptimewire .button.uptimewire-button-danger:focus {
+	background: #8a2424;
+	border-color: #8a2424;
+	color: #fff;
+}
+
+.uptimewire-confirm {
+	border-left-color: #b32d2e;
+}
+
+.uptimewire-unconfirmed .uptimewire-actions {
+	align-items: center;
+	margin: 8px 0;
+}

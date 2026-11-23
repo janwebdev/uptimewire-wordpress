@@ -168,7 +168,7 @@ final class SettingsTest extends Test_Case {
 		self::read_status( array( 'error' => 'connection_ended' ), 401 );
 		$html = self::screen();
 
-		$this->assertStringContainsString( 'Reconnection Required', $html );
+		$this->assertStringContainsString( 'Connection No Longer Active', $html );
 		$this->assertStringContainsString( '>Reconnect</a>', $html );
 		$this->assertStringNotContainsString( '<h2>Monitoring</h2>', $html );
 	}

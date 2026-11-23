@@ -44,7 +44,7 @@ final class Rest {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( __CLASS__, 'start' ),
-				'permission_callback' => array( Plugin::class, 'current_user_can' ),
+				'permission_callback' => array( Plugin::class, 'can_manage' ),
 				'args'                => array(
 					'understand' => array(
 						'type'    => 'boolean',
@@ -60,7 +60,7 @@ final class Rest {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( __CLASS__, 'status' ),
-				'permission_callback' => array( Plugin::class, 'current_user_can' ),
+				'permission_callback' => array( Plugin::class, 'can_manage' ),
 			)
 		);
 
@@ -70,7 +70,7 @@ final class Rest {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( __CLASS__, 'refresh' ),
-				'permission_callback' => array( Plugin::class, 'current_user_can' ),
+				'permission_callback' => array( Plugin::class, 'can_view' ),
 				'args'                => array(
 					'force' => array(
 						'type'    => 'boolean',

@@ -68,7 +68,7 @@ final class SiteHealthTest extends Test_Case {
 		Fake_Api::reset();
 		$results = self::results();
 
-		$this->assertSame( array( 'uptimewire_connection', 'uptimewire_monitoring', 'uptimewire_ssl', 'uptimewire_domain', 'uptimewire_access' ), array_keys( $results ) );
+		$this->assertSame( array( 'uptimewire_connection', 'uptimewire_monitoring', 'uptimewire_ssl', 'uptimewire_access' ), array_keys( $results ), 'An unknown domain expiration date is not a passed test.' );
 		foreach ( $results as $name => $result ) {
 			$this->assertSame( 'good', $result['status'], $name );
 			$this->assertSame( $name, $result['test'] );
@@ -78,7 +78,7 @@ final class SiteHealthTest extends Test_Case {
 		$this->assertStringContainsString( 'every 5 minutes', $results['uptimewire_monitoring']['description'] );
 		$this->assertSame( 'Your SSL certificate is valid', $results['uptimewire_ssl']['label'] );
 		$this->assertStringContainsString( 'Expires in 79 days', $results['uptimewire_ssl']['description'] );
-		$this->assertSame( 'The domain expiration date isn’t available', $results['uptimewire_domain']['label'], 'Domain expiry unknown is neutral.' );
+		$this->assertSame( 'Unavailable — the registry does not provide a reliable expiration date', self::info_fields()['domain']['value'], 'Domain expiry unknown is said in Info.' );
 		$this->assertSame( 'UptimeWire can reach your website', $results['uptimewire_access']['label'] );
 		$this->assertSame( array(), Fake_Api::calls(), 'Site Health never asks UptimeWire.' );
 	}
@@ -170,7 +170,7 @@ final class SiteHealthTest extends Test_Case {
 	}
 
 	/**
-	 * Domain: known date, unknown date, not checked, expiring, failed lookup.
+	 * Domain: known date, expiring, expired. An unknown date (not published, failed lookup, not checked) is no test.
 	 *
 	 * @return void
 	 */
@@ -178,10 +178,10 @@ final class SiteHealthTest extends Test_Case {
 		self::connect_site();
 		$cases = array(
 			array( array( 'state' => 'ok', 'expiry_known' => true, 'days_left' => 200, 'expires_at' => gmdate( 'Y-m-d\TH:i:s+00:00', time() + 200 * 86400 ) ), 'good', 'Your domain registration is current' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-			array( array( 'state' => 'ok', 'expiry_known' => false ), 'good', 'The domain expiration date isn’t available' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			array( array( 'state' => 'ok', 'expiry_known' => false ), null, '' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			array( array( 'state' => 'problem', 'warning' => 'expires_soon', 'expiry_known' => true, 'days_left' => 9, 'expires_at' => gmdate( 'Y-m-d\TH:i:s+00:00', time() + 9 * 86400 ) ), 'recommended', 'Your domain expires soon' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			array( array( 'state' => 'problem', 'warning' => 'expired', 'expiry_known' => true, 'days_left' => -1, 'expires_at' => gmdate( 'Y-m-d\TH:i:s+00:00', time() - 86400 ) ), 'critical', 'Your domain registration has expired' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-			array( array( 'state' => 'problem', 'warning' => 'check_failed', 'expiry_known' => false ), 'good', 'UptimeWire couldn’t look up the domain expiration date' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			array( array( 'state' => 'problem', 'warning' => 'check_failed', 'expiry_known' => false ), null, '' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			array( array( 'state' => 'unknown' ), null, '' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			array( array( 'state' => 'not_on_plan' ), null, '' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		);
@@ -280,9 +280,9 @@ final class SiteHealthTest extends Test_Case {
 
 		$this->assertSame( array( 'uptimewire_connection' ), array_keys( $results ) );
 		$this->assertSame( 'recommended', $results['uptimewire_connection']['status'] );
-		$this->assertSame( 'The UptimeWire connection has ended', $results['uptimewire_connection']['label'] );
+		$this->assertSame( 'The UptimeWire connection is no longer active', $results['uptimewire_connection']['label'] );
 		$this->assertStringContainsString( 'Reconnect', $results['uptimewire_connection']['actions'] );
-		$this->assertSame( 'Connection ended in UptimeWire', self::info_fields()['error']['value'] );
+		$this->assertSame( 'Connection no longer active', self::info_fields()['error']['value'] );
 	}
 
 	/**

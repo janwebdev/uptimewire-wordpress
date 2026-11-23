@@ -52,7 +52,7 @@ final class Widget {
 	 * @return void
 	 */
 	public static function register() {
-		if ( ! Plugin::current_user_can() ) {
+		if ( ! Plugin::can_view() ) {
 			return;
 		}
 
@@ -67,7 +67,7 @@ final class Widget {
 	 */
 	public static function enqueue( $hook_suffix ) {
 		// The Network Admin and User dashboards have the same hook name, but not the widget.
-		if ( 'index.php' !== $hook_suffix || is_network_admin() || is_user_admin() || ! Plugin::current_user_can() ) {
+		if ( 'index.php' !== $hook_suffix || is_network_admin() || is_user_admin() || ! Plugin::can_view() ) {
 			return;
 		}
 
@@ -126,7 +126,8 @@ final class Widget {
 	 * @return void
 	 */
 	public static function render_inner() {
-		$state = State::current();
+		$state  = State::current();
+		$manage = Plugin::can_manage();
 
 		if ( State::NOT_CONNECTED === $state ) {
 			self::box(
@@ -135,7 +136,7 @@ final class Widget {
 				__( 'UptimeWire Is Not Connected', 'uptimewire' ),
 				array( __( 'Start free monitoring for your WordPress website.', 'uptimewire' ) )
 			);
-			self::footer( '', __( 'Set Up Monitoring', 'uptimewire' ), true );
+			self::footer( '', $manage ? __( 'Set Up Monitoring', 'uptimewire' ) : __( 'Open UptimeWire Overview', 'uptimewire' ), $manage );
 
 			return;
 		}
@@ -144,10 +145,22 @@ final class Widget {
 			self::box(
 				'warn',
 				'dashicons-warning',
-				__( 'Connection Expired', 'uptimewire' ),
-				array( __( 'The connection between WordPress and UptimeWire ended, so the monitoring status can’t be shown here. UptimeWire’s own monitoring isn’t affected by this.', 'uptimewire' ) )
+				__( 'Reconnect to UptimeWire', 'uptimewire' ),
+				array( __( 'This site’s connection to UptimeWire is no longer active, so the monitoring status can’t be shown here. UptimeWire’s own monitoring isn’t affected by this.', 'uptimewire' ) )
 			);
-			self::footer( '', __( 'Reconnect', 'uptimewire' ), true );
+			self::footer( '', $manage ? __( 'Reconnect', 'uptimewire' ) : __( 'Open UptimeWire Overview', 'uptimewire' ), $manage );
+
+			return;
+		}
+
+		if ( State::SITE_COPY === $state ) {
+			self::box(
+				'unknown',
+				'dashicons-info',
+				__( 'This WordPress Site Is a Copy', 'uptimewire' ),
+				array( __( 'The UptimeWire connection stored here was made on another WordPress address, so it belongs to another website. No monitoring data is shown here.', 'uptimewire' ) )
+			);
+			self::footer( '', __( 'Open UptimeWire Overview', 'uptimewire' ), false );
 
 			return;
 		}
@@ -234,7 +247,7 @@ final class Widget {
 			return Dashboard::announcement();
 		}
 
-		return State::RECONNECTION_REQUIRED === $state ? __( 'Connection Expired', 'uptimewire' ) : State::label( $state );
+		return State::RECONNECTION_REQUIRED === $state ? __( 'Reconnect to UptimeWire', 'uptimewire' ) : State::label( $state );
 	}
 
 	/**

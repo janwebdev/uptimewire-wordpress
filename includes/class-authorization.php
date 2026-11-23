@@ -32,6 +32,9 @@ final class Authorization {
 	/** Transient naming an authorization whose proof UptimeWire fetched. */
 	const PROOF_SEEN_TRANSIENT = 'uptimewire_proof_seen';
 
+	/** Option naming the accounts of a reconnection that went to another UptimeWire account. */
+	const ACCOUNT_CHANGED_OPTION = 'uptimewire_account_changed';
+
 	/**
 	 * Seconds the plugin keeps asking after the code's own life when UptimeWire
 	 * cannot be reached: a code allowed in its last seconds still has two minutes.
@@ -491,6 +494,9 @@ final class Authorization {
 			return;
 		}
 
+		$label    = (string) Status_Data::account_label( isset( $link['account_label'] ) ? $link['account_label'] : null );
+		$previous = Connection::account_label();
+
 		Connection::save(
 			$token,
 			array(
@@ -498,11 +504,62 @@ final class Authorization {
 				'connected_at'  => isset( $link['connected_at'] ) && is_string( $link['connected_at'] ) ? $link['connected_at'] : '',
 				'site_url'      => $site,
 				'local_url'     => (string) $pending['site_url'],
+				'home'          => home_url( '/' ),
 				'connected_by'  => (int) $pending['started_by'],
-				'account_label' => (string) Status_Data::account_label( isset( $link['account_label'] ) ? $link['account_label'] : null ),
+				'account_label' => $label,
 			)
 		);
 		self::forget();
+
+		if ( '' !== $previous && '' !== $label && $previous !== $label ) {
+			// The person approved in another account than before: said once on the next screen, never silent.
+			update_option(
+				self::ACCOUNT_CHANGED_OPTION,
+				array(
+					'from' => $previous,
+					'to'   => $label,
+				),
+				false
+			);
+		}
+	}
+
+	/**
+	 * The accounts of a reconnection that went to another UptimeWire account, once.
+	 *
+	 * @return array{from: string, to: string}|null
+	 */
+	public static function take_account_change() {
+		$change = get_option( self::ACCOUNT_CHANGED_OPTION, null );
+
+		if ( null === $change ) {
+			return null;
+		}
+
+		delete_option( self::ACCOUNT_CHANGED_OPTION );
+
+		$from = is_array( $change ) && isset( $change['from'] ) ? Status_Data::account_label( $change['from'] ) : null;
+		$to   = is_array( $change ) && isset( $change['to'] ) ? Status_Data::account_label( $change['to'] ) : null;
+
+		return null !== $from && null !== $to ? array(
+			'from' => $from,
+			'to'   => $to,
+		) : null;
+	}
+
+	/**
+	 * Forgets the authorization in progress, its outcome and its marks (disconnect).
+	 *
+	 * A code already approved in UptimeWire is then refused when it arrives:
+	 * collect() ends such a credential in UptimeWire instead of saving it.
+	 *
+	 * @return void
+	 */
+	public static function reset() {
+		self::cancel();
+		self::forget();
+		self::clear_outcome();
+		delete_option( self::ACCOUNT_CHANGED_OPTION );
 	}
 
 	/**
