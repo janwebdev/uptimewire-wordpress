@@ -304,6 +304,7 @@ final class Dashboard {
 
 					case 'up':
 						self::render_last_check( $site );
+						self::render_attention( $data );
 						break;
 
 					case 'checking':
@@ -319,7 +320,7 @@ final class Dashboard {
 								/* translators: 1: date and time the downtime started; 2: how long it has lasted, such as "25 mins". */
 								esc_html__( 'Down since %1$s (%2$s).', 'uptimewire' ),
 								self::time_html( $site['down_since'] ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in time_html().
-								esc_html( human_time_diff( $site['down_since'], max( $site['down_since'], time() ) ) )
+								esc_html( self::duration( max( 0, time() - $site['down_since'] ) ) )
 							);
 							echo '</p>';
 						}
@@ -369,10 +370,46 @@ final class Dashboard {
 					(int) $site['blocked']
 				)
 			);
-			echo ' ';
+			echo '</p><p>';
 			View::external_link( Plugin::website_url( self::FIREWALL_GUIDE ), __( 'How to allow UptimeWire', 'uptimewire' ) );
 			echo '</p>';
 		}
+	}
+
+	/**
+	 * Prints which checks need attention while the website itself is online,
+	 * so an expired certificate is not hidden behind "online".
+	 *
+	 * @param array<string, mixed> $data Kept data.
+	 * @return void
+	 */
+	private static function render_attention( array $data ) {
+		$names = array(
+			'ssl'    => __( 'SSL certificate', 'uptimewire' ),
+			'domain' => __( 'domain', 'uptimewire' ),
+			'dns'    => __( 'DNS', 'uptimewire' ),
+		);
+		$found = array();
+
+		foreach ( $names as $check => $name ) {
+			if ( 'problem' === $data[ $check ]['state'] ) {
+				$found[] = $name;
+			}
+		}
+
+		if ( array() === $found ) {
+			return;
+		}
+
+		echo '<p class="uptimewire-attention"><span class="dashicons dashicons-warning" aria-hidden="true"></span> ';
+		echo esc_html(
+			sprintf(
+				/* translators: %s: list of checks, such as "SSL certificate, DNS". */
+				__( 'Needs attention: %s. See the checks below.', 'uptimewire' ),
+				implode( wp_get_list_item_separator(), $found )
+			)
+		);
+		echo '</p>';
 	}
 
 	/**
@@ -466,10 +503,16 @@ final class Dashboard {
 
 		$uptime_lines = array();
 
-		$uptime_lines[] = null !== $window['percent']
+		if ( null === $window['percent'] ) {
+			$uptime_lines[] = __( 'Uptime, 30 days: not measured yet', 'uptimewire' );
+		} elseif ( $window['measured_seconds'] < Status_Data::WINDOWS['30d'] - 60 && null !== $window['from'] ) {
+			// A shorter history is named, so the number is not read as 30 days.
+			/* translators: 1: date measuring started; 2: uptime percentage such as "99.97%". */
+			$uptime_lines[] = sprintf( __( 'Uptime since %1$s: %2$s', 'uptimewire' ), wp_date( get_option( 'date_format' ), $window['from'] ), self::percent( $window['percent'] ) );
+		} else {
 			/* translators: %s: uptime percentage such as "99.97%". */
-			? sprintf( __( 'Uptime, 30 days: %s', 'uptimewire' ), self::percent( $window['percent'] ) )
-			: __( 'Uptime, 30 days: not measured yet', 'uptimewire' );
+			$uptime_lines[] = sprintf( __( 'Uptime, 30 days: %s', 'uptimewire' ), self::percent( $window['percent'] ) );
+		}
 
 		if ( null !== $site['average_response_ms_24h'] ) {
 			/* translators: %s: average response time in milliseconds, such as "400". */
@@ -923,10 +966,34 @@ final class Dashboard {
 	 * @return string
 	 */
 	private static function duration( $seconds ) {
-		return $seconds < 60
+		if ( $seconds < 60 ) {
 			/* translators: %d: seconds. */
-			? sprintf( _n( '%d second', '%d seconds', $seconds, 'uptimewire' ), $seconds )
-			: human_time_diff( 0, $seconds );
+			return sprintf( _n( '%d second', '%d seconds', $seconds, 'uptimewire' ), $seconds );
+		}
+
+		$minutes = (int) round( $seconds / 60 );
+
+		if ( $minutes < 60 ) {
+			/* translators: %d: minutes. */
+			return sprintf( _n( '%d minute', '%d minutes', $minutes, 'uptimewire' ), $minutes );
+		}
+
+		if ( $seconds < 86400 ) {
+			$hours = intdiv( $minutes, 60 );
+			/* translators: %d: hours. */
+			$text = sprintf( _n( '%d hour', '%d hours', $hours, 'uptimewire' ), $hours );
+
+			return 0 === $minutes % 60
+				? $text
+				/* translators: 1: hours, such as "2 hours"; 2: minutes, such as "5 minutes". */
+				: sprintf( __( '%1$s %2$s', 'uptimewire' ), $text, sprintf( _n( '%d minute', '%d minutes', $minutes % 60, 'uptimewire' ), $minutes % 60 ) );
+		}
+
+		// Whole days, never rounded up: "9 days" is not "1 week".
+		$days = intdiv( $seconds, 86400 );
+
+		/* translators: %d: days. */
+		return sprintf( _n( '%d day', '%d days', $days, 'uptimewire' ), $days );
 	}
 
 	/**

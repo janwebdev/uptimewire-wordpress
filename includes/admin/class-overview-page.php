@@ -319,7 +319,8 @@ final class Overview_Page {
 		Dashboard::render();
 		?>
 		<details class="uptimewire-connection-details">
-			<summary><?php esc_html_e( 'Connection details', 'uptimewire' ); ?> <?php self::state_badge( State::CONNECTION_ESTABLISHED ); ?></summary>
+			<summary><?php esc_html_e( 'Connection details', 'uptimewire' ); ?></summary>
+			<p class="uptimewire-state-line"><?php self::state_badge( State::CONNECTION_ESTABLISHED ); ?></p>
 			<?php self::render_connection_table( $record ); ?>
 		</details>
 		<?php

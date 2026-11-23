@@ -94,7 +94,7 @@ final class DashboardTest extends Test_Case {
 		$this->assertStringContainsString( '<li>Email</li>', $html );
 		$this->assertStringContainsString( '<li>Telegram</li>', $html );
 		$this->assertStringContainsString( 'Website was down', $html );
-		$this->assertStringContainsString( 'Lasted ' . human_time_diff( 0, 600 ), $html );
+		$this->assertStringContainsString( 'Lasted 10 minutes', $html );
 		$this->assertStringContainsString( 'href="https://app.uptimewire.com/monitors/0193a3b2/view"', $html );
 		$this->assertStringContainsString( 'Expiry date unknown', $html );
 		$this->assertStringContainsString( 'Connection Established', $html );
@@ -197,7 +197,7 @@ final class DashboardTest extends Test_Case {
 		);
 
 		$this->assertStringContainsString( 'Down since <time', $html );
-		$this->assertStringContainsString( '(' . human_time_diff( 0, 1500 ) . ').', $html );
+		$this->assertStringContainsString( '(25 minutes).', $html );
 		$this->assertStringContainsString( 'HTTP 403 Forbidden', $html );
 		$this->assertStringContainsString( 'answered UptimeWire’s checks with HTTP 403', $html );
 		$this->assertStringContainsString( 'allow-uptimewire-checks-through-firewall', $html );
@@ -238,6 +238,8 @@ final class DashboardTest extends Test_Case {
 		$html = $this->read_and_render( $answer );
 
 		$this->assertStringContainsString( '2 days (since ', $html );
+		$this->assertStringContainsString( 'Uptime since ', $html, 'The card names the shorter history.' );
+		$this->assertStringNotContainsString( 'Uptime, 30 days: 100%', $html );
 		$this->assertStringContainsString( 'Your plan keeps less history', $html );
 		$this->assertStringContainsString( 'counts only the time UptimeWire actually measured', $html );
 	}
@@ -253,7 +255,7 @@ final class DashboardTest extends Test_Case {
 
 		return array(
 			'ssl valid'          => array( 'ssl', array( 'state' => 'ok', 'checked_at' => null, 'expires_at' => $soon, 'days_left' => 79, 'warning' => null, 'error' => null ), array( 'Valid', 'Expires in 79 days' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-			'ssl expired'        => array( 'ssl', array( 'state' => 'problem', 'checked_at' => null, 'expires_at' => $past, 'days_left' => -3, 'warning' => 'expired', 'error' => null ), array( 'Expired', 'Expired 3 days ago' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			'ssl expired'        => array( 'ssl', array( 'state' => 'problem', 'checked_at' => null, 'expires_at' => $past, 'days_left' => -3, 'warning' => 'expired', 'error' => null ), array( 'Expired', 'Expired 3 days ago', 'Needs attention: SSL certificate.' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			'ssl expires soon'   => array( 'ssl', array( 'state' => 'problem', 'checked_at' => null, 'expires_at' => $soon, 'days_left' => 5, 'warning' => 'expires_soon', 'error' => null ), array( 'Expires soon', 'Expires in 5 days' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			'ssl check failed'   => array( 'ssl', array( 'state' => 'problem', 'checked_at' => null, 'expires_at' => null, 'days_left' => null, 'warning' => 'check_failed', 'error' => 'TLS handshake failed' ), array( 'Check failed', 'TLS handshake failed' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			'ssl not applicable' => array( 'ssl', array( 'state' => 'not_applicable', 'checked_at' => null, 'expires_at' => null, 'days_left' => null, 'warning' => null, 'error' => null ), array( 'No certificate', 'uses http://' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
@@ -325,7 +327,7 @@ final class DashboardTest extends Test_Case {
 
 		$html = $this->read_and_render( self::status_answer( array(), array( 'events' => $events ) ) );
 
-		foreach ( array( 'Website is down', 'Ongoing, ' . human_time_diff( 0, 900 ) . ' so far', 'SSL certificate warning', 'SSL certificate renewed', 'Domain expiration warning', 'Domain renewed', 'DNS records changed', 'Other event (see UptimeWire)', 'Full incident history in UptimeWire' ) as $words ) {
+		foreach ( array( 'Website is down', 'Ongoing, 15 minutes so far', 'SSL certificate warning', 'SSL certificate renewed', 'Domain expiration warning', 'Domain renewed', 'DNS records changed', 'Other event (see UptimeWire)', 'Full incident history in UptimeWire' ) as $words ) {
 			$this->assertStringContainsString( $words, $html );
 		}
 		$this->assertSame( 1, substr_count( $html, 'Website is down' ), 'Only the outage is called down.' );

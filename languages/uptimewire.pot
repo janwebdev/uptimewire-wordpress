@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-23T21:01:16+00:00\n"
+"POT-Creation-Date: 2026-11-23T21:13:20+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: uptimewire\n"
@@ -150,7 +150,7 @@ msgid "Last known status: %s"
 msgstr ""
 
 #: includes/admin/class-dashboard.php:125
-#: includes/admin/class-overview-page.php:341
+#: includes/admin/class-overview-page.php:342
 #: includes/admin/class-settings-page.php:48
 msgid "Website"
 msgstr ""
@@ -261,214 +261,238 @@ msgid_plural "Results appear here after it does. Your website is checked every %
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/admin/class-dashboard.php:310
+#: includes/admin/class-dashboard.php:311
 msgid "A check just failed. UptimeWire is checking again before it reports downtime. This is not confirmed downtime."
 msgstr ""
 
 #. translators: 1: date and time the downtime started; 2: how long it has lasted, such as "25 mins".
-#: includes/admin/class-dashboard.php:320
+#: includes/admin/class-dashboard.php:321
 #, php-format
 msgid "Down since %1$s (%2$s)."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:331
+#: includes/admin/class-dashboard.php:332
 msgid "Planned maintenance is marked for this website in UptimeWire. Time in maintenance isn’t counted as downtime."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:335
+#: includes/admin/class-dashboard.php:336
 msgid "UptimeWire isn’t checking your website right now, so there are no new results and no alerts. You can resume monitoring in UptimeWire."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:336
+#: includes/admin/class-dashboard.php:337
 msgid "Resume in UptimeWire"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:340
+#: includes/admin/class-dashboard.php:341
 msgid "UptimeWire reported a status this version of the plugin doesn’t recognize. Open UptimeWire to see it, or update the plugin."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:344
+#: includes/admin/class-dashboard.php:345
 msgid "The status above is the latest one received."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:360
+#: includes/admin/class-dashboard.php:361
 msgid "Reason:"
 msgstr ""
 
 #. translators: %d: HTTP status code such as 403.
-#: includes/admin/class-dashboard.php:368
+#: includes/admin/class-dashboard.php:369
 #, php-format
 msgid "Your website answered UptimeWire’s checks with HTTP %d. A firewall, a security plugin or bot protection may be blocking the checks, while visitors can still open the site."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:373
-#: includes/admin/class-overview-page.php:477
+#: includes/admin/class-dashboard.php:374
+#: includes/admin/class-overview-page.php:478
 msgid "How to allow UptimeWire"
 msgstr ""
 
+#: includes/admin/class-dashboard.php:388
+msgid "SSL certificate"
+msgstr ""
+
+#: includes/admin/class-dashboard.php:389
+msgid "domain"
+msgstr ""
+
+#: includes/admin/class-dashboard.php:390
+msgid "DNS"
+msgstr ""
+
+#. translators: %s: list of checks, such as "SSL certificate, DNS".
+#: includes/admin/class-dashboard.php:408
+#, php-format
+msgid "Needs attention: %s. See the checks below."
+msgstr ""
+
 #. translators: 1: when, such as "3 mins ago"; 2: country the check ran from, such as "Germany".
-#: includes/admin/class-dashboard.php:393
+#: includes/admin/class-dashboard.php:430
 #, php-format
 msgid "Last checked %1$s from %2$s."
 msgstr ""
 
 #. translators: %s: when, such as "3 mins ago".
-#: includes/admin/class-dashboard.php:400
+#: includes/admin/class-dashboard.php:437
 #, php-format
 msgid "Last checked %s."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:415
+#: includes/admin/class-dashboard.php:452
 msgid "One More Step: Verify Your Email"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:416
+#: includes/admin/class-dashboard.php:453
 msgid "Monitoring Is Being Initialized"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:417
+#: includes/admin/class-dashboard.php:454
 msgid "Your Website Is Online"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:418
+#: includes/admin/class-dashboard.php:455
 msgid "We’re Double-Checking Your Website"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:419
+#: includes/admin/class-dashboard.php:456
 msgid "Your Website Is Down"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:420
+#: includes/admin/class-dashboard.php:457
 msgid "Planned Maintenance"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:421
+#: includes/admin/class-dashboard.php:458
 msgid "Monitoring Is Paused"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:424
+#: includes/admin/class-dashboard.php:461
 msgid "Status Unknown"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:459
+#: includes/admin/class-dashboard.php:496
 msgid "Waiting for the first check"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:460
+#: includes/admin/class-dashboard.php:497
 msgid "Online"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:461
+#: includes/admin/class-dashboard.php:498
 msgid "Checking again"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:462
+#: includes/admin/class-dashboard.php:499
 msgid "Down"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:463
+#: includes/admin/class-dashboard.php:500
 msgid "Planned maintenance"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:464
+#: includes/admin/class-dashboard.php:501
 msgid "Paused"
 msgstr ""
 
+#: includes/admin/class-dashboard.php:507
+msgid "Uptime, 30 days: not measured yet"
+msgstr ""
+
+#. translators: 1: date measuring started; 2: uptime percentage such as "99.97%".
+#: includes/admin/class-dashboard.php:511
+#, php-format
+msgid "Uptime since %1$s: %2$s"
+msgstr ""
+
 #. translators: %s: uptime percentage such as "99.97%".
-#: includes/admin/class-dashboard.php:471
+#: includes/admin/class-dashboard.php:514
 #, php-format
 msgid "Uptime, 30 days: %s"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:472
-msgid "Uptime, 30 days: not measured yet"
-msgstr ""
-
 #. translators: %s: average response time in milliseconds, such as "400".
-#: includes/admin/class-dashboard.php:476
+#: includes/admin/class-dashboard.php:519
 #, php-format
 msgid "Average response, 24 hours: %s ms"
 msgstr ""
 
 #. translators: %d: minutes between checks.
-#: includes/admin/class-dashboard.php:481
+#: includes/admin/class-dashboard.php:524
 #, php-format
 msgid "Checked every %d minute"
 msgid_plural "Checked every %d minutes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/admin/class-dashboard.php:485
+#: includes/admin/class-dashboard.php:528
 msgid "Website Checks"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:490
+#: includes/admin/class-dashboard.php:533
 msgid "Website Uptime"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:493
-#: includes/admin/class-dashboard.php:547
-#: includes/admin/class-dashboard.php:613
+#: includes/admin/class-dashboard.php:536
+#: includes/admin/class-dashboard.php:590
+#: includes/admin/class-dashboard.php:656
 msgid "Unknown"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:498
+#: includes/admin/class-dashboard.php:541
 msgid "SSL Certificate"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:499
+#: includes/admin/class-dashboard.php:542
 msgid "Domain Expiration"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:524
+#: includes/admin/class-dashboard.php:567
 msgid "Registered"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:524
+#: includes/admin/class-dashboard.php:567
 msgid "Valid"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:529
+#: includes/admin/class-dashboard.php:572
 msgid "Expired"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:530
+#: includes/admin/class-dashboard.php:573
 msgid "Expires soon"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:531
+#: includes/admin/class-dashboard.php:574
 msgid "Check failed"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:533
+#: includes/admin/class-dashboard.php:576
 msgid "Needs attention"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:537
+#: includes/admin/class-dashboard.php:580
 msgid "No certificate"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:538
+#: includes/admin/class-dashboard.php:581
 msgid "Your website uses http://, so there is no certificate to check."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:542
-#: includes/admin/class-dashboard.php:608
+#: includes/admin/class-dashboard.php:585
+#: includes/admin/class-dashboard.php:651
 msgid "Not in your plan"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:543
-#: includes/admin/class-dashboard.php:609
+#: includes/admin/class-dashboard.php:586
+#: includes/admin/class-dashboard.php:652
 msgid "Your UptimeWire plan doesn’t include this check."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:548
-#: includes/admin/class-dashboard.php:614
+#: includes/admin/class-dashboard.php:591
+#: includes/admin/class-dashboard.php:657
 msgid "No result to show yet."
 msgstr ""
 
 #. translators: 1: number of days; 2: date.
-#: includes/admin/class-dashboard.php:555
+#: includes/admin/class-dashboard.php:598
 #, php-format
 msgid "Expired %1$d day ago, on %2$s"
 msgid_plural "Expired %1$d days ago, on %2$s"
@@ -476,7 +500,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of days; 2: date.
-#: includes/admin/class-dashboard.php:557
+#: includes/admin/class-dashboard.php:600
 #, php-format
 msgid "Expires in %1$d day, on %2$s"
 msgid_plural "Expires in %1$d days, on %2$s"
@@ -484,312 +508,344 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: date.
-#: includes/admin/class-dashboard.php:560
+#: includes/admin/class-dashboard.php:603
 #, php-format
 msgid "Expires on %s"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:562
+#: includes/admin/class-dashboard.php:605
 msgid "Expiry date unknown: the domain registry doesn’t publish it."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:586
+#: includes/admin/class-dashboard.php:629
 msgid "No unreviewed changes"
 msgstr ""
 
 #. translators: %s: date.
-#: includes/admin/class-dashboard.php:589
-#: includes/admin/class-dashboard.php:603
+#: includes/admin/class-dashboard.php:632
+#: includes/admin/class-dashboard.php:646
 #, php-format
 msgid "Last change on %s"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:590
+#: includes/admin/class-dashboard.php:633
 msgid "No changes detected"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:594
+#: includes/admin/class-dashboard.php:637
 msgid "Changes detected"
 msgstr ""
 
 #. translators: %d: number of DNS changes nobody reviewed yet.
-#: includes/admin/class-dashboard.php:597
+#: includes/admin/class-dashboard.php:640
 #, php-format
 msgid "%d change to review in UptimeWire"
 msgid_plural "%d changes to review in UptimeWire"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/admin/class-dashboard.php:599
+#: includes/admin/class-dashboard.php:642
 msgid "Review the change in UptimeWire."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:617
+#: includes/admin/class-dashboard.php:660
 msgid "DNS Monitoring"
 msgstr ""
 
 #. translators: %s: when, such as "3 mins ago".
-#: includes/admin/class-dashboard.php:656
+#: includes/admin/class-dashboard.php:699
 #, php-format
 msgid "Checked %s"
 msgstr ""
 
 #. translators: %s: card title, such as "SSL Certificate". Read by screen readers only, after "Details".
-#: includes/admin/class-dashboard.php:664
-#: includes/admin/class-dashboard.php:769
-#: includes/admin/class-dashboard.php:778
+#: includes/admin/class-dashboard.php:707
+#: includes/admin/class-dashboard.php:812
+#: includes/admin/class-dashboard.php:821
 msgid "Details"
 msgstr ""
 
 #. translators: %s: card title, such as "SSL Certificate". Read by screen readers only, after "Details".
-#: includes/admin/class-dashboard.php:664
+#: includes/admin/class-dashboard.php:707
 #, php-format
 msgid "about %s"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:680
+#: includes/admin/class-dashboard.php:723
 msgid "Last 24 hours"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:681
+#: includes/admin/class-dashboard.php:724
 msgid "Last 7 days"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:682
+#: includes/admin/class-dashboard.php:725
 msgid "Last 30 days"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:687
-#: includes/admin/class-dashboard.php:692
-#: includes/admin/class-dashboard.php:712
+#: includes/admin/class-dashboard.php:730
+#: includes/admin/class-dashboard.php:735
+#: includes/admin/class-dashboard.php:755
 msgid "Uptime"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:691
-#: includes/admin/class-dashboard.php:711
+#: includes/admin/class-dashboard.php:734
+#: includes/admin/class-dashboard.php:754
 msgid "Period"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:693
-#: includes/admin/class-dashboard.php:715
+#: includes/admin/class-dashboard.php:736
+#: includes/admin/class-dashboard.php:758
 msgid "Downtime"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:694
-#: includes/admin/class-dashboard.php:726
+#: includes/admin/class-dashboard.php:737
+#: includes/admin/class-dashboard.php:769
 msgid "Measured"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:704
+#: includes/admin/class-dashboard.php:747
 msgid "Your plan keeps less history than some of these periods, so they cover only the history kept."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:707
+#: includes/admin/class-dashboard.php:750
 msgid "Uptime counts only the time UptimeWire actually measured, for example since the website was added. Planned maintenance isn’t counted."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:713
-#: includes/admin/class-dashboard.php:718
+#: includes/admin/class-dashboard.php:756
+#: includes/admin/class-dashboard.php:761
 msgid "Not measured yet"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:720
+#: includes/admin/class-dashboard.php:763
 msgid "None"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:729
+#: includes/admin/class-dashboard.php:772
 msgid "Nothing measured"
 msgstr ""
 
 #. translators: 1: measured time, such as "2 days"; 2: date measuring started.
-#: includes/admin/class-dashboard.php:732
+#: includes/admin/class-dashboard.php:775
 #, php-format
 msgid "%1$s (since %2$s)"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:736
+#: includes/admin/class-dashboard.php:779
 msgid "Whole period"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:760
+#: includes/admin/class-dashboard.php:803
 msgid "Recent Events"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:762
+#: includes/admin/class-dashboard.php:805
 msgid "No events in the history UptimeWire keeps for your plan."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:767
-#: includes/admin/class-dashboard.php:776
+#: includes/admin/class-dashboard.php:810
+#: includes/admin/class-dashboard.php:819
 msgid "Event"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:768
-#: includes/admin/class-dashboard.php:777
+#: includes/admin/class-dashboard.php:811
+#: includes/admin/class-dashboard.php:820
 msgid "When"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:785
+#: includes/admin/class-dashboard.php:828
 msgid "Full incident history in UptimeWire"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:799
+#: includes/admin/class-dashboard.php:842
 msgid "Website is down"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:800
+#: includes/admin/class-dashboard.php:843
 msgid "Website was down"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:801
+#: includes/admin/class-dashboard.php:844
 msgid "SSL certificate warning"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:802
+#: includes/admin/class-dashboard.php:845
 msgid "SSL certificate renewed"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:803
+#: includes/admin/class-dashboard.php:846
 msgid "Domain expiration warning"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:804
+#: includes/admin/class-dashboard.php:847
 msgid "Domain renewed"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:805
+#: includes/admin/class-dashboard.php:848
 msgid "DNS records changed"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:809
+#: includes/admin/class-dashboard.php:852
 msgid "Other event (see UptimeWire)"
 msgstr ""
 
 #. translators: %s: duration such as "25 mins".
-#: includes/admin/class-dashboard.php:826
+#: includes/admin/class-dashboard.php:869
 #, php-format
 msgid "Ongoing, %s so far"
 msgstr ""
 
 #. translators: %s: duration such as "25 mins".
-#: includes/admin/class-dashboard.php:828
+#: includes/admin/class-dashboard.php:871
 #, php-format
 msgid "Lasted %s"
 msgstr ""
 
 #. translators: %s: date.
-#: includes/admin/class-dashboard.php:833
+#: includes/admin/class-dashboard.php:876
 #, php-format
 msgid "Expiry date: %s"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:849
+#: includes/admin/class-dashboard.php:892
 msgid "Email"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:850
+#: includes/admin/class-dashboard.php:893
 msgid "Telegram"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:851
+#: includes/admin/class-dashboard.php:894
 msgid "Slack"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:852
+#: includes/admin/class-dashboard.php:895
 msgid "Discord"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:853
+#: includes/admin/class-dashboard.php:896
 msgid "SMS"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:854
+#: includes/admin/class-dashboard.php:897
 msgid "Webhook"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:855
+#: includes/admin/class-dashboard.php:898
 msgid "Microsoft Teams"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:861
+#: includes/admin/class-dashboard.php:904
 msgid "Alerts are ready"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:862
+#: includes/admin/class-dashboard.php:905
 msgid "If your website goes down or a check finds a problem, UptimeWire alerts you by:"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:865
+#: includes/admin/class-dashboard.php:908
 msgid "Alerts can’t reach you right now"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:868
+#: includes/admin/class-dashboard.php:911
 msgid "Monitoring hasn’t started, so no alerts are sent. Verify your email address first."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:870
+#: includes/admin/class-dashboard.php:913
 msgid "Monitoring is paused, so no alerts are sent."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:872
+#: includes/admin/class-dashboard.php:915
 msgid "No alert channel is set up for this website."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:874
+#: includes/admin/class-dashboard.php:917
 msgid "None of the alert channels set up for this website can deliver alerts right now."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:879
+#: includes/admin/class-dashboard.php:922
 msgid "Alert Readiness"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:883
+#: includes/admin/class-dashboard.php:926
 msgid "Alert channels"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:888
+#: includes/admin/class-dashboard.php:931
 msgid "Other"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:893
+#: includes/admin/class-dashboard.php:936
 msgid "A new alert email address is waiting for confirmation. Until it is confirmed, email alerts go to the previous address."
 msgstr ""
 
-#: includes/admin/class-dashboard.php:898
+#: includes/admin/class-dashboard.php:941
 msgid "Alert settings in UptimeWire"
 msgstr ""
 
-#: includes/admin/class-dashboard.php:900
+#: includes/admin/class-dashboard.php:943
 msgid "Configure Alerts in UptimeWire"
 msgstr ""
 
 #. translators: %s: number such as 99.97.
-#: includes/admin/class-dashboard.php:916
+#: includes/admin/class-dashboard.php:959
 #, php-format
 msgid "%s%%"
 msgstr ""
 
 #. translators: %d: seconds.
-#: includes/admin/class-dashboard.php:928
+#: includes/admin/class-dashboard.php:971
 #, php-format
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/admin/class-dashboard.php:950
+#. translators: %d: minutes.
+#. translators: 1: hours, such as "2 hours"; 2: minutes, such as "5 minutes".
+#: includes/admin/class-dashboard.php:978
+#: includes/admin/class-dashboard.php:989
+#, php-format
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: hours.
+#: includes/admin/class-dashboard.php:984
+#, php-format
+msgid "%d hour"
+msgid_plural "%d hours"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: hours, such as "2 hours"; 2: minutes, such as "5 minutes".
+#: includes/admin/class-dashboard.php:989
+#, php-format
+msgid "%1$s %2$s"
+msgstr ""
+
+#. translators: %d: days.
+#: includes/admin/class-dashboard.php:996
+#, php-format
+msgid "%d day"
+msgid_plural "%d days"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/admin/class-dashboard.php:1017
 msgid "just now"
 msgstr ""
 
 #. translators: %s: time span such as "3 mins".
-#: includes/admin/class-dashboard.php:952
+#: includes/admin/class-dashboard.php:1019
 #, php-format
 msgid "%s ago"
 msgstr ""
 
 #. translators: Hidden text after a link to the UptimeWire website, read by screen readers.
-#: includes/admin/class-dashboard.php:995
-#: includes/admin/class-dashboard.php:1013
+#: includes/admin/class-dashboard.php:1062
+#: includes/admin/class-dashboard.php:1080
 #: includes/admin/class-overview-page.php:200
 #: includes/admin/class-view.php:61
 msgid "(opens UptimeWire in a new tab)"
@@ -865,7 +921,7 @@ msgid "Check that UptimeWire shows the same code before you approve. You don’t
 msgstr ""
 
 #: includes/admin/class-overview-page.php:200
-#: includes/admin/class-overview-page.php:450
+#: includes/admin/class-overview-page.php:451
 msgid "Open UptimeWire"
 msgstr ""
 
@@ -898,7 +954,7 @@ msgid "The code expired. Start again."
 msgstr ""
 
 #: includes/admin/class-overview-page.php:263
-#: includes/admin/class-overview-page.php:605
+#: includes/admin/class-overview-page.php:606
 msgid "Connection cancelled. Nothing was changed."
 msgstr ""
 
@@ -907,7 +963,7 @@ msgid "If you didn’t click Deny, your role in the UptimeWire account may not a
 msgstr ""
 
 #: includes/admin/class-overview-page.php:266
-#: includes/admin/class-overview-page.php:435
+#: includes/admin/class-overview-page.php:436
 msgid "Website Addresses Don’t Match"
 msgstr ""
 
@@ -955,255 +1011,255 @@ msgstr ""
 msgid "Connection details"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:346
+#: includes/admin/class-overview-page.php:347
 msgid "Connected"
 msgstr ""
 
 #. translators: %s: WordPress user name.
-#: includes/admin/class-overview-page.php:352
+#: includes/admin/class-overview-page.php:353
 #, php-format
 msgid "by %s"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:359
+#: includes/admin/class-overview-page.php:360
 #: includes/admin/class-settings-page.php:39
 msgid "Connection"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:363
+#: includes/admin/class-overview-page.php:364
 msgid "Credential"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:367
+#: includes/admin/class-overview-page.php:368
 msgid "Kept in wp-config.php (UPTIMEWIRE_TOKEN)."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:369
+#: includes/admin/class-overview-page.php:370
 msgid "Kept in the WordPress database. It is never shown."
 msgstr ""
 
 #. translators: %s: date and time UptimeWire last confirmed the connection.
-#: includes/admin/class-overview-page.php:392
+#: includes/admin/class-overview-page.php:393
 #, php-format
 msgid "Working. UptimeWire confirmed it on %s."
 msgstr ""
 
 #. translators: %s: date and time UptimeWire last confirmed the connection.
-#: includes/admin/class-overview-page.php:396
+#: includes/admin/class-overview-page.php:397
 #, php-format
 msgid "Couldn’t reach UptimeWire just now. Last confirmed on %s."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:397
+#: includes/admin/class-overview-page.php:398
 msgid "Couldn’t reach UptimeWire just now."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:399
+#: includes/admin/class-overview-page.php:400
 msgid "Not checked yet."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:412
+#: includes/admin/class-overview-page.php:413
 #: includes/class-state.php:89
 msgid "Reconnection Required"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:413
+#: includes/admin/class-overview-page.php:414
 msgid "The UptimeWire connection ended. It was removed in UptimeWire, or the website was deleted there."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:415
+#: includes/admin/class-overview-page.php:416
 msgid "Remove UPTIMEWIRE_TOKEN from wp-config.php, then reconnect from this screen."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:417
+#: includes/admin/class-overview-page.php:418
 msgid "Reconnect"
 msgstr ""
 
 #. translators: 1: website address in UptimeWire; 2: address of this WordPress site.
-#: includes/admin/class-overview-page.php:439
+#: includes/admin/class-overview-page.php:440
 #, php-format
 msgid "This connection belongs to %1$s. This site is %2$s, probably a copy of that site or a site that moved. Its monitoring data is not shown here."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:442
+#: includes/admin/class-overview-page.php:443
 msgid "Don’t reconnect from a copy: that would move the connection away from the original site. If the site moved, change the website address in UptimeWire."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:443
+#: includes/admin/class-overview-page.php:444
 msgid "After you correct the website address in UptimeWire, check again."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:448
+#: includes/admin/class-overview-page.php:449
 msgid "Check Again"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:453
-#: includes/admin/class-overview-page.php:456
+#: includes/admin/class-overview-page.php:454
+#: includes/admin/class-overview-page.php:457
 #: includes/class-state.php:88
 msgid "Connection Error"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:454
+#: includes/admin/class-overview-page.php:455
 msgid "UPTIMEWIRE_TOKEN in wp-config.php is not a valid UptimeWire credential. Correct it, or remove it and connect from this screen."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:457
+#: includes/admin/class-overview-page.php:458
 msgid "UPTIMEWIRE_TOKEN is set in wp-config.php, but UptimeWire hasn’t confirmed it yet because it couldn’t be reached. This screen tries again in a few minutes."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:472
+#: includes/admin/class-overview-page.php:473
 msgid "UptimeWire couldn’t confirm your website?"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:473
+#: includes/admin/class-overview-page.php:474
 msgid "After you approve, UptimeWire opens one address on your website to make sure it is this WordPress. If UptimeWire says it couldn’t:"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:476
+#: includes/admin/class-overview-page.php:477
 msgid "Cloudflare or another firewall may block the check. Allow UptimeWire’s checks there — you don’t need to turn the protection off."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:479
+#: includes/admin/class-overview-page.php:480
 msgid "UptimeWire addresses"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:481
+#: includes/admin/class-overview-page.php:482
 msgid "A security plugin may block it. Allow the UptimeWire addresses or the “UptimeWireBot” user agent in its settings."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:482
+#: includes/admin/class-overview-page.php:483
 msgid "A page cache or CDN that ignores query strings may answer with a stored page. Exclude addresses with “uptimewire_proof” from the cache."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:483
+#: includes/admin/class-overview-page.php:484
 msgid "Maintenance mode, a “coming soon” page or a password on the whole site keeps UptimeWire out while it is on."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:484
+#: includes/admin/class-overview-page.php:485
 msgid "The website to monitor must be the address visitors use."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:486
+#: includes/admin/class-overview-page.php:487
 msgid "Then click Allow in UptimeWire again while the code is valid."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:528
+#: includes/admin/class-overview-page.php:529
 msgid "This looks like a local site. UptimeWire checks websites from the internet, so it can't reach this one. Install the plugin on your live site instead."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:532
+#: includes/admin/class-overview-page.php:533
 msgid "This looks like a staging or development site. Usually you only monitor the live site. Continue only if this site is public and you want alerts for it."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:536
+#: includes/admin/class-overview-page.php:537
 msgid "Your site doesn't use HTTPS. Uptime, domain and DNS will be checked, but there's no certificate to check."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:563
+#: includes/admin/class-overview-page.php:564
 msgid "Website to monitor:"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:567
+#: includes/admin/class-overview-page.php:568
 msgid "Change"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:572
+#: includes/admin/class-overview-page.php:573
 msgid "Website address"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:576
+#: includes/admin/class-overview-page.php:577
 msgid "The address visitors use, starting with https:// or http://. By default it is the Site Address from Settings › General."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:579
+#: includes/admin/class-overview-page.php:580
 msgid "Save address"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:581
+#: includes/admin/class-overview-page.php:582
 msgid "Use the WordPress Site Address"
 msgstr ""
 
-#: includes/admin/class-overview-page.php:601
+#: includes/admin/class-overview-page.php:602
 msgid "Website address saved."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:602
+#: includes/admin/class-overview-page.php:603
 msgid "The WordPress Site Address is used again."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:603
+#: includes/admin/class-overview-page.php:604
 msgid "That is not a website address. Enter a full address such as https://example.com/ without a query string."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:604
+#: includes/admin/class-overview-page.php:605
 msgid "Your WordPress website is connected to UptimeWire."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:606
+#: includes/admin/class-overview-page.php:607
 msgid "Your browser didn’t open the new tab. Click “Open UptimeWire” to continue."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:607
+#: includes/admin/class-overview-page.php:608
 msgid "This website is already connected to UptimeWire."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:608
+#: includes/admin/class-overview-page.php:609
 msgid "UPTIMEWIRE_TOKEN is set in wp-config.php. Remove it before connecting this website again."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:609
+#: includes/admin/class-overview-page.php:610
 msgid "A local site cannot be connected: UptimeWire checks websites from the internet."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:610
+#: includes/admin/class-overview-page.php:611
 msgid "Check “I understand” to confirm that this staging or development site is public, then try again."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:611
+#: includes/admin/class-overview-page.php:612
 msgid "A connection request is already in progress. Wait a few seconds and try again."
 msgstr ""
 
 #. translators: %s: how long to wait, such as "5 mins".
-#: includes/admin/class-overview-page.php:616
+#: includes/admin/class-overview-page.php:617
 #, php-format
 msgid "UptimeWire received too many connection requests from this server. Try again in %s."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:617
+#: includes/admin/class-overview-page.php:618
 msgid "UptimeWire received too many connection requests from this server. Try again later."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:619
+#: includes/admin/class-overview-page.php:620
 msgid "UptimeWire can’t monitor this website address. It must be a public address starting with https:// or http://, without a query string. Check the website to monitor below."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:620
+#: includes/admin/class-overview-page.php:621
 msgid "Couldn’t reach UptimeWire. Nothing was changed. Check that this server can make outgoing HTTPS connections, then try again."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:621
+#: includes/admin/class-overview-page.php:622
 msgid "UptimeWire sent an answer the plugin doesn’t understand. Nothing was changed. Please try again later."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:622
+#: includes/admin/class-overview-page.php:623
 msgid "Showing the latest results from UptimeWire. Refreshing doesn’t run a new check."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:623
+#: includes/admin/class-overview-page.php:624
 msgid "The status is already being updated. Reload this page in a few seconds."
 msgstr ""
 
 #. translators: %s: how long to wait, such as "1 min".
-#: includes/admin/class-overview-page.php:628
+#: includes/admin/class-overview-page.php:629
 #, php-format
 msgid "UptimeWire asked to wait before the next update. Try again in %s."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:629
+#: includes/admin/class-overview-page.php:630
 msgid "UptimeWire asked to wait before the next update. Try again later."
 msgstr ""
 
-#: includes/admin/class-overview-page.php:631
+#: includes/admin/class-overview-page.php:632
 msgid "Couldn’t get the latest status from UptimeWire. The screen shows the last status received, if any."
 msgstr ""
 

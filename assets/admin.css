@@ -293,6 +293,13 @@
 	font-size: 18px;
 	width: 18px;
 	height: 18px;
+	line-height: 18px !important; /* .wp-core-ui .button sets a taller line on the icon. */
+	margin-top: 0;
+	vertical-align: middle;
+}
+
+.uptimewire-refresh .dashicons::before {
+	line-height: 18px;
 }
 
 .uptimewire-refresh.is-busy .dashicons {
@@ -324,9 +331,9 @@
 
 .uptimewire-primary-icon.dashicons {
 	flex: none;
-	width: 40px;
-	height: 40px;
-	font-size: 40px;
+	width: 48px;
+	height: 48px;
+	font-size: 48px;
 	color: var(--uptimewire-tone, #50575e);
 }
 
@@ -336,7 +343,7 @@
 
 .uptimewire-primary h2 {
 	margin: 4px 0 8px;
-	font-size: 1.6em;
+	font-size: 1.85em;
 	line-height: 1.25;
 }
 
@@ -447,7 +454,6 @@
 
 .uptimewire-table {
 	width: 100%;
-	max-width: 900px;
 	border-collapse: collapse;
 	background: #fff;
 	border: 1px solid #c3c4c7;
@@ -481,6 +487,9 @@
 }
 
 .uptimewire-events tbody th .dashicons {
+	width: 20px;
+	margin-right: 4px;
+	text-align: center;
 	color: var(--uptimewire-tone, #50575e);
 	vertical-align: text-bottom;
 }
@@ -489,13 +498,11 @@
 	padding: 16px;
 	background: #fff;
 	border: 1px dashed #c3c4c7;
-	max-width: 900px;
 	box-sizing: border-box;
 }
 
 .uptimewire-alerts {
 	box-sizing: border-box;
-	max-width: 900px;
 	padding: 16px 20px;
 	background: #fff;
 	border: 1px solid #c3c4c7;
@@ -523,7 +530,6 @@
 
 .uptimewire-connection-details {
 	margin-top: 24px;
-	max-width: 900px;
 }
 
 .uptimewire-connection-details summary {
@@ -585,8 +591,32 @@
 		border: 0;
 	}
 
+	.uptimewire-table td:empty {
+		display: none;
+	}
+
 	.uptimewire-table td::before {
 		content: attr(data-label) ": ";
 		color: #50575e;
 	}
+}
+
+.uptimewire-attention {
+	display: flex;
+	align-items: flex-start;
+	gap: 4px;
+	font-weight: 600;
+}
+
+.uptimewire-attention .dashicons {
+	flex: none;
+	color: var(--uptimewire-warn);
+}
+
+.uptimewire-block > .description {
+	margin-top: 8px;
+}
+
+.uptimewire-outcome .uptimewire-actions {
+	align-items: center;
 }
