@@ -123,10 +123,34 @@ final class LifecycleTest extends Test_Case {
 				'site_url'      => 'https://www.customer-site.com',
 				'local_url'     => 'https://www.customer-site.com',
 				'home'          => $home,
+				'home_key'      => hash( 'sha256', \UptimeWire\Site_Match::key( $home ) ),
 				'connected_by'  => 1,
 				'account_label' => 'ACC-00001000',
 			)
 		);
+	}
+
+	/**
+	 * A migration tool replaced the old address with the new one everywhere in the
+	 * database (wp search-replace, Duplicator, WP Migrate): the plain addresses of
+	 * the record now name the copy, the fingerprint still names the original.
+	 *
+	 * @return void
+	 */
+	public function test_copy_after_search_replace() {
+		update_option( 'home', 'https://staging.customer-site.com' );
+		self::connect_on( 'https://www.customer-site.com/' );
+		$record              = get_option( Connection::OPTION );
+		$record['home']      = 'https://staging.customer-site.com/';
+		$record['local_url'] = 'https://staging.customer-site.com';
+		$record['site_url']  = 'https://staging.customer-site.com';
+		update_option( Connection::OPTION, $record, false );
+		// The "Website to monitor" option of a site behind a proxy is not touched by the replacement.
+		update_option( 'uptimewire_site_url', 'https://www.customer-site.com/', false );
+
+		$this->assertSame( State::SITE_COPY, State::current() );
+		$this->assertSame( Status::NOT_CONNECTED, Status::refresh( true ) );
+		$this->assertSame( array(), Fake_Api::calls() );
 	}
 
 	/**
@@ -400,6 +424,7 @@ final class LifecycleTest extends Test_Case {
 		$this->assertSame( State::CONNECTION_ESTABLISHED, State::current() );
 		$this->assertSame( 'uwp_' . str_repeat( 'ab', 32 ), Connection::token(), 'The new credential, never the revoked one.' );
 		$this->assertSame( home_url( '/' ), Connection::get()['home'], 'The WordPress address is recorded.' );
+		$this->assertSame( Connection::home_key(), Connection::get()['home_key'] );
 		$this->assertNull( Connection::unconfirmed(), 'A new connection replaces the old one in UptimeWire.' );
 		$this->assertNull( Authorization::take_account_change() );
 	}
@@ -586,11 +611,12 @@ final class LifecycleTest extends Test_Case {
 	 */
 	public function test_older_connection_records_its_address() {
 		self::connect_site();
-		$this->assertArrayNotHasKey( 'home', Connection::get() );
+		$this->assertArrayNotHasKey( 'home_key', Connection::get() );
 
 		self::read_status( self::status_answer() );
 
 		$this->assertSame( home_url( '/' ), Connection::get()['home'] );
+		$this->assertSame( Connection::home_key(), Connection::get()['home_key'] );
 	}
 
 	/**

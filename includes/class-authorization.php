@@ -499,12 +499,11 @@ final class Authorization {
 
 		Connection::save(
 			$token,
-			array(
+			Connection::identity() + array(
 				'id'            => $link['id'],
 				'connected_at'  => isset( $link['connected_at'] ) && is_string( $link['connected_at'] ) ? $link['connected_at'] : '',
 				'site_url'      => $site,
 				'local_url'     => (string) $pending['site_url'],
-				'home'          => home_url( '/' ),
 				'connected_by'  => (int) $pending['started_by'],
 				'account_label' => $label,
 			)

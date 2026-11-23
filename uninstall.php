@@ -32,8 +32,9 @@ function uptimewire_uninstall_revoke( &$budget ) {
 	}
 
 	// The WordPress address the connection was made on must be this one: a copy keeps the database, not the address.
-	if ( isset( $record['home'] ) && is_string( $record['home'] ) && '' !== $record['home'] ) {
-		$own = \UptimeWire\Site_Match::matches_any( $record['home'], array( home_url( '/' ) ) );
+	// Compared by fingerprint, as UptimeWire\Connection::is_copy() does: migration tools rewrite plain addresses.
+	if ( isset( $record['home_key'] ) && is_string( $record['home_key'] ) && '' !== $record['home_key'] ) {
+		$own = hash_equals( $record['home_key'], hash( 'sha256', \UptimeWire\Site_Match::key( home_url( '/' ) ) ) );
 	} else {
 		$saved = get_option( 'uptimewire_site_url', '' );
 		$own   = isset( $record['local_url'] ) && is_string( $record['local_url'] )

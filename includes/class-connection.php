@@ -202,18 +202,44 @@ final class Connection {
 	 * address (http or https, a trailing slash, the case of the host) are
 	 * allowed; "www." and the path are not.
 	 *
+	 * The address is compared by its fingerprint ("home_key"), not by the
+	 * address kept for messages ("home"): migration tools replace the old
+	 * address with the new one everywhere in the database, and would turn the
+	 * copy's record into the original's.
+	 *
 	 * @param array<string, mixed> $record Record from get().
 	 * @return bool
 	 */
 	public static function is_copy( array $record ) {
-		if ( isset( $record['home'] ) && is_string( $record['home'] ) && '' !== $record['home'] ) {
-			return ! Site_Match::matches_any( $record['home'], array( home_url( '/' ) ) );
+		if ( isset( $record['home_key'] ) && is_string( $record['home_key'] ) && '' !== $record['home_key'] ) {
+			return ! hash_equals( $record['home_key'], self::home_key() );
 		}
 
 		// Connected before the WordPress address was recorded: the address chosen then must still be this site's.
 		$local = isset( $record['local_url'] ) && is_string( $record['local_url'] ) ? $record['local_url'] : '';
 
 		return '' !== $local && ! Site_Match::matches_any( $local, Plugin::own_urls() );
+	}
+
+	/**
+	 * Fingerprint of this site's WordPress address, as is_copy() compares it.
+	 *
+	 * @return string
+	 */
+	public static function home_key() {
+		return hash( 'sha256', Site_Match::key( home_url( '/' ) ) );
+	}
+
+	/**
+	 * The WordPress address of this site, in the two forms a record keeps.
+	 *
+	 * @return array{home: string, home_key: string}
+	 */
+	public static function identity() {
+		return array(
+			'home'     => home_url( '/' ),
+			'home_key' => self::home_key(),
+		);
 	}
 
 	/**
@@ -300,9 +326,9 @@ final class Connection {
 		$local = isset( $stored['local_url'] ) && is_string( $stored['local_url'] ) ? $stored['local_url'] : '';
 		$same  = ! self::is_copy( $stored ) && Site_Match::matches_any( $site_url, Plugin::own_urls() ) && Site_Match::matches_any( $local, Plugin::own_urls() );
 
-		if ( $same && empty( $stored['home'] ) ) {
+		if ( $same && empty( $stored['home_key'] ) ) {
 			// A connection made before the WordPress address was recorded.
-			$stored['home'] = home_url( '/' );
+			$stored = self::identity() + $stored;
 		}
 
 		$stored['site_url'] = $site_url;
@@ -402,16 +428,16 @@ final class Connection {
 				$stored['id']           = $data['id'];
 				$stored['connected_at'] = isset( $data['connected_at'] ) && is_string( $data['connected_at'] ) ? $data['connected_at'] : '';
 				$stored['local_url']    = Plugin::site_url();
-				$stored['home']         = home_url( '/' );
 				$stored['connected_by'] = 0;
+				$stored                 = self::identity() + $stored;
 			}
 
 			$local = isset( $stored['local_url'] ) && is_string( $stored['local_url'] ) ? $stored['local_url'] : '';
 			$same  = ! self::is_copy( $stored ) && Site_Match::matches_any( $data['site']['url'], Plugin::own_urls() ) && Site_Match::matches_any( $local, Plugin::own_urls() );
 
-			if ( $same && empty( $stored['home'] ) ) {
+			if ( $same && empty( $stored['home_key'] ) ) {
 				// A connection made before the WordPress address was recorded.
-				$stored['home'] = home_url( '/' );
+				$stored = self::identity() + $stored;
 			}
 
 			$health['state']        = $same ? self::HEALTH_OK : self::HEALTH_MISMATCH;
