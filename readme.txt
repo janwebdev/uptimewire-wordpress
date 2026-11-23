@@ -56,7 +56,7 @@ After you approve, UptimeWire opens one address on your site. Cloudflare, a fire
 
 = Where is the connection credential stored? Can I keep it out of the database? =
 
-It is stored in the option `uptimewire_connection`, which is not loaded on every page, and it is never shown on any screen. To keep it in `wp-config.php` instead, copy it once with WP-CLI (`wp option pluck uptimewire_connection token`) and add `define( 'UPTIMEWIRE_TOKEN', '…' );`. The plugin then uses the constant and removes the copy from the database. Remove the constant before connecting the site again. On a multisite network the constant counts for the main site only; the other sites of the network keep their own connections.
+It is stored in the option `uptimewire_connection`, which is not loaded on every page, and it is never shown on any screen. To keep it in `wp-config.php` instead, copy it once with WP-CLI (`wp option pluck uptimewire_connection token`) and add `define( 'UPTIMEWIRE_TOKEN', '…' );`. The plugin then uses the constant and removes the copy from the database. A plugin that logs every outgoing HTTP request would also log the credential, because it is sent in the request header. Remove the constant before connecting the site again. On a multisite network the constant counts for the main site only; the other sites of the network keep their own connections.
 
 = What happens when I delete the plugin? =
 

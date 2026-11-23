@@ -419,7 +419,7 @@ final class Site_Health {
 
 		$info[ self::SECTION ] = array(
 			'label'       => __( 'UptimeWire', 'uptimewire' ),
-			'description' => __( 'The connection to UptimeWire and the latest monitoring status WordPress received. It contains no credentials or email addresses.', 'uptimewire' ),
+			'description' => __( 'The connection to UptimeWire and the latest monitoring status WordPress received. It contains the UptimeWire account number, but no credentials or email addresses.', 'uptimewire' ),
 			'fields'      => $fields,
 		);
 

@@ -14,9 +14,10 @@ defined( 'ABSPATH' ) || exit;
  *
  * The credential is kept in the option "uptimewire_connection" (not autoloaded)
  * or, for sites that keep secrets out of the database, in the constant
- * UPTIMEWIRE_TOKEN in wp-config.php. It is never printed, logged or sent to the
- * browser, and it is not encrypted with a key from the same server: that would
- * look like protection without being one.
+ * UPTIMEWIRE_TOKEN in wp-config.php. The plugin never prints, logs or sends it
+ * to the browser (another plugin that logs every outgoing HTTP request would
+ * see it in the request header), and it is not encrypted with a key from the
+ * same server: that would look like protection without being one.
  */
 final class Connection {
 
