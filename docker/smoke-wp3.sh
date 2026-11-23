@@ -137,7 +137,7 @@ fake '[401,{"error":{"code":"connection_ended","message":"x"}},{"www-authenticat
 rest "$TMP/admin" "$NONCE_REST" -o "$TMP/r.json"
 check "redirect to Overview" '"redirect":' "$TMP/r.json"
 page "$TMP/admin" "$TMP/ended.html" >/dev/null
-check "reconnection offered" 'Reconnection Required' "$TMP/ended.html"
+check "reconnection offered" 'Reconnect to UptimeWire' "$TMP/ended.html"
 [ "$($WP option get uptimewire_status 2>/dev/null | wc -c)" = 0 ] && pass "kept status removed" || fail "kept status left"
 
 echo "--- logs"

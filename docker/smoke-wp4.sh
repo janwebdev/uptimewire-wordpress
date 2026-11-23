@@ -167,12 +167,12 @@ $WP eval '$s = get_option( "uptimewire_status" ); $s["retry_at"] = 0; $s["attemp
 fake '[401,{"error":{"code":"connection_ended","message":"x"}},{"www-authenticate":"Bearer"}]'
 widget "$TMP/admin" "$NONCE" -o "$TMP/r.json"
 absent "no redirect from the Dashboard" '"redirect"' "$TMP/r.json"
-check "Connection Expired" 'Connection Expired' "$TMP/r.json"
+check "Reconnect to UptimeWire" 'Reconnect to UptimeWire' "$TMP/r.json"
 dash "$TMP/admin" "$TMP/dash3.html" >/dev/null
-check "dashboard: Connection Expired" 'Connection Expired' "$TMP/dash3.html"
+check "dashboard: Reconnect to UptimeWire" 'Reconnect to UptimeWire' "$TMP/dash3.html"
 absent "dashboard: no refresh script after the end" 'uptimewire/assets/dashboard.js' "$TMP/dash3.html"
 $CURL -b "$TMP/admin" -o "$TMP/health2.html" "$BASE/wp-admin/site-health.php"
-check "Site Health: connection ended" 'The UptimeWire connection has ended' "$TMP/health2.html"
+check "Site Health: connection no longer active" 'The UptimeWire connection is no longer active' "$TMP/health2.html"
 absent "Site Health: no monitoring test" 'uptimewire_monitoring' "$TMP/health2.html"
 
 echo "--- Not connected: one neutral line"
