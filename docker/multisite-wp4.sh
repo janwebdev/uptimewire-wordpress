@@ -91,6 +91,15 @@ code=$($CURL -b "$TMP/three" -H "X-WP-Nonce: $NONCE" -H 'Content-Type: applicati
 absent "own answer: not site two" 'two.customer-site.com' "$TMP/r3.json"
 [ "$(grep -c '^/wp/v1/status' wp-content/fake-api-log.txt)" = 0 ] && pass "no reads (own copy is fresh, the other refused)" || fail "reads: $(cat wp-content/fake-api-log.txt)"
 
+echo "--- UPTIMEWIRE_TOKEN in wp-config.php belongs to the main site only"
+$WP config set UPTIMEWIRE_TOKEN "$TOKEN" >/dev/null
+[ "$($WP eval 'echo null === UptimeWire\Connection::configured_token() ? "none" : "set";')" = set ] && pass "main site uses the constant" || fail "main site ignores the constant"
+for s in "$TWO" "$THREE"; do
+	[ "$($WP eval 'echo null === UptimeWire\Connection::configured_token() ? "none" : "set";' $s)" = none ] && pass "subsite ${s##*/wp4} ignores the constant" || fail "subsite $s uses the network-wide constant"
+done
+[ "$($WP eval 'echo UptimeWire\Connection::account_label();' $THREE)" = ACC-00000333 ] && pass "site three keeps its own connection" || fail "site three connection replaced"
+$WP config delete UPTIMEWIRE_TOKEN >/dev/null
+
 $WP option delete uwtest_fake_api $TWO >/dev/null
 $WP option delete uwtest_fake_api $THREE >/dev/null
 rm -f wp-content/mu-plugins/uw-fake-api.php

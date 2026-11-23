@@ -112,10 +112,14 @@ final class Connection {
 	/**
 	 * The value of UPTIMEWIRE_TOKEN, or null when the constant is not defined.
 	 *
+	 * On a multisite network every site reads the same wp-config.php, but a
+	 * credential belongs to one website: the constant counts for the main site
+	 * only, and the other sites keep their own connections in their options.
+	 *
 	 * @return string|null
 	 */
 	public static function configured_token() {
-		if ( ! defined( self::TOKEN_CONSTANT ) ) {
+		if ( ! defined( self::TOKEN_CONSTANT ) || ( is_multisite() && ! is_main_site() ) ) {
 			return null;
 		}
 
