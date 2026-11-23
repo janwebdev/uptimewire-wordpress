@@ -211,7 +211,13 @@ final class SettingsTest extends Test_Case {
 		self::read_status( self::status_answer() );
 		self::make_status_older( 2 * 3600 );
 
-		$this->assertStringContainsString( 'Current monitoring status is unavailable.', self::screen() );
+		$html = self::screen();
+
+		$this->assertStringContainsString( 'Current monitoring status is unavailable.', $html );
+		$this->assertStringContainsString( 'Last known: Your Website Is Online', $html );
+		$this->assertStringContainsString( 'Current Alert Readiness Is Unknown', $html );
+		$this->assertStringNotContainsString( 'monitoring is active', $html );
+		$this->assertStringContainsString( 'uptimewire-tone-unknown"><span class="dashicons dashicons-backup" aria-hidden="true"></span> Last known: Your Website Is Online', $html );
 	}
 
 	/**

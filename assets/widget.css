@@ -73,7 +73,7 @@
 .uptimewire-widget-facts div {
 	display: grid;
 	grid-template-columns: minmax(7em, auto) 1fr;
-	gap: 8px;
+	gap: 12px;
 	padding: 4px 0;
 	border-bottom: 1px solid #f0f0f1;
 }
@@ -85,6 +85,14 @@
 .uptimewire-widget-facts dd {
 	margin: 0;
 	overflow-wrap: anywhere;
+}
+
+.uptimewire-widget-flag {
+	font-weight: 600;
+}
+
+.uptimewire-widget-flag .dashicons {
+	color: var(--uptimewire-tone, #50575e);
 }
 
 .uptimewire-widget-note {

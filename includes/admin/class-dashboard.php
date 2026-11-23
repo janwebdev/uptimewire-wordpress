@@ -79,7 +79,7 @@ final class Dashboard {
 				self::render_events( $data );
 			}
 
-			self::render_alerts( $data, $headline );
+			self::render_alerts( $data, $headline, $stale );
 			?>
 		</div>
 		<?php
@@ -884,13 +884,14 @@ final class Dashboard {
 	 *
 	 * @param array<string, mixed> $data     Kept data.
 	 * @param string               $headline Status_Data::headline().
+	 * @param bool                 $stale    Whether the data is only the last known status.
 	 * @return void
 	 */
-	private static function render_alerts( array $data, $headline ) {
+	private static function render_alerts( array $data, $headline, $stale ) {
 		?>
-		<section class="uptimewire-block uptimewire-alerts uptimewire-tone-<?php echo esc_attr( self::alert_availability( $data['alerts'], $headline )[0] ); ?>" aria-labelledby="uptimewire-alerts-title">
+		<section class="uptimewire-block uptimewire-alerts uptimewire-tone-<?php echo esc_attr( self::alert_availability( $data['alerts'], $headline, $stale )[0] ); ?>" aria-labelledby="uptimewire-alerts-title">
 			<h2 id="uptimewire-alerts-title" class="uptimewire-block-title"><?php esc_html_e( 'Alert Readiness', 'uptimewire' ); ?></h2>
-			<?php self::render_alert_readiness( $data, $headline ); ?>
+			<?php self::render_alert_readiness( $data, $headline, $stale ); ?>
 		</section>
 		<?php
 	}
@@ -904,11 +905,12 @@ final class Dashboard {
 	 *
 	 * @param array<string, mixed> $data     Kept data.
 	 * @param string               $headline Status_Data::headline().
+	 * @param bool                 $stale    Whether the data is only the last known status.
 	 * @return void
 	 */
-	public static function render_alert_readiness( array $data, $headline ) {
+	public static function render_alert_readiness( array $data, $headline, $stale = false ) {
 		$alerts       = $data['alerts'];
-		$availability = self::alert_availability( $alerts, $headline );
+		$availability = self::alert_availability( $alerts, $headline, $stale );
 		$settings     = null !== $data['links']['alerts'] ? $data['links']['alerts'] : Overview_Page::DASHBOARD;
 		?>
 		<p class="uptimewire-card-value"><span class="dashicons <?php echo esc_attr( $availability[1] ); ?>" aria-hidden="true"></span> <?php echo esc_html( $availability[2] ); ?></p>
@@ -950,10 +952,24 @@ final class Dashboard {
 	 *
 	 * @param array<string, mixed> $alerts   Kept alerts.
 	 * @param string               $headline Status_Data::headline().
+	 * @param bool                 $stale    Whether the data is only the last known status.
 	 * @return array{0: string, 1: string, 2: string, 3: string} Tone, icon, title, text.
 	 */
-	public static function alert_availability( array $alerts, $headline ) {
+	public static function alert_availability( array $alerts, $headline, $stale = false ) {
 		$configured = array() !== $alerts['channels'] || $alerts['other_channels'];
+
+		// Old data says nothing about now: the last known answer is named as such.
+		if ( $stale ) {
+			$last = self::alert_availability( $alerts, $headline );
+
+			return array(
+				'unknown',
+				'dashicons-backup',
+				__( 'Current Alert Readiness Is Unknown', 'uptimewire' ),
+				/* translators: %s: the last known readiness, such as "Alerts Are Ready". */
+				sprintf( __( 'Current monitoring status is unavailable. Last known: %s.', 'uptimewire' ), $last[2] ),
+			);
+		}
 
 		if ( 'unverified' === $headline ) {
 			return array( 'info', 'dashicons-email-alt', __( 'Email Verification Required', 'uptimewire' ), __( 'Monitoring and notifications will start after the account email is verified.', 'uptimewire' ) );

@@ -205,7 +205,8 @@ final class Widget {
 					sprintf( __( 'Updated %s ago. Current monitoring status is unavailable.', 'uptimewire' ), human_time_diff( $status['fetched_at'], time() ) ),
 				)
 			);
-			self::footer( $synced, __( 'View Monitoring Details', 'uptimewire' ), false );
+			// The box already says when the status was received.
+			self::footer( '', __( 'View Monitoring Details', 'uptimewire' ), false );
 
 			return;
 		}
@@ -311,9 +312,17 @@ final class Widget {
 			return array();
 		}
 
+		$ssl = esc_html( self::ssl( $data['ssl'] ) );
+
+		// A certificate problem is marked, so it is not read as part of a green "online".
+		if ( 'problem' === $data['ssl']['state'] ) {
+			$tone = 'expired' === $data['ssl']['warning'] ? 'bad' : 'warn';
+			$ssl  = '<span class="uptimewire-widget-flag uptimewire-tone-' . $tone . '"><span class="dashicons dashicons-warning" aria-hidden="true"></span> ' . $ssl . '</span>';
+		}
+
 		$facts = array(
 			array( __( 'Uptime', 'uptimewire' ), esc_html( self::uptime( $data ) ) ),
-			array( __( 'SSL', 'uptimewire' ), esc_html( self::ssl( $data['ssl'] ) ) ),
+			array( __( 'SSL', 'uptimewire' ), $ssl ),
 			array(
 				__( 'Last checked', 'uptimewire' ),
 				null !== $data['site']['last_checked_at'] ? Dashboard::ago_html( $data['site']['last_checked_at'] ) : esc_html__( 'Not yet', 'uptimewire' ),
@@ -321,6 +330,10 @@ final class Widget {
 		);
 
 		$attention = array();
+
+		if ( 'problem' === $data['ssl']['state'] ) {
+			$attention[] = __( 'SSL certificate', 'uptimewire' );
+		}
 
 		if ( 'problem' === $data['domain']['state'] ) {
 			$attention[] = __( 'domain', 'uptimewire' );
@@ -331,7 +344,7 @@ final class Widget {
 		}
 
 		if ( array() !== $attention ) {
-			$facts[] = array( __( 'Needs attention', 'uptimewire' ), esc_html( implode( wp_get_list_item_separator(), $attention ) ) );
+			$facts[] = array( __( 'Needs attention', 'uptimewire' ), '<span class="uptimewire-widget-flag uptimewire-tone-warn"><span class="dashicons dashicons-warning" aria-hidden="true"></span> ' . esc_html( implode( wp_get_list_item_separator(), $attention ) ) . '</span>' );
 		}
 
 		if ( null !== $data['site']['blocked'] ) {

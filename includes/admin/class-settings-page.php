@@ -39,12 +39,13 @@ final class Settings_Page {
 		$record    = $connected ? Connection::get() : null;
 		$status    = Status::get();
 		$data      = $connected ? Status::data() : null;
+		$stale     = null !== $data && Status::is_stale( $status );
 		?>
 		<div class="wrap uptimewire uptimewire-settings">
 			<h1><?php esc_html_e( 'UptimeWire Settings', 'uptimewire' ); ?></h1>
 			<hr class="wp-header-end">
 
-			<?php if ( null !== $data && Status::is_stale( $status ) ) : ?>
+			<?php if ( $stale ) : ?>
 				<div class="notice notice-info inline">
 					<p>
 						<?php
@@ -58,8 +59,8 @@ final class Settings_Page {
 			<?php self::render_connection( $state, $record, $status, $data ); ?>
 
 			<?php if ( $connected ) : ?>
-				<?php self::render_monitoring( $data ); ?>
-				<?php self::render_alerts( $data ); ?>
+				<?php self::render_monitoring( $data, $stale ); ?>
+				<?php self::render_alerts( $data, $stale ); ?>
 			<?php endif; ?>
 
 			<h2><?php esc_html_e( 'Plans', 'uptimewire' ); ?></h2>
@@ -147,10 +148,11 @@ final class Settings_Page {
 	/**
 	 * Prints the monitoring: status, interval and the checks of the plan.
 	 *
-	 * @param array<string, mixed>|null $data Kept data of this website.
+	 * @param array<string, mixed>|null $data  Kept data of this website.
+	 * @param bool                      $stale Whether the data is only the last known status.
 	 * @return void
 	 */
-	private static function render_monitoring( $data ) {
+	private static function render_monitoring( $data, $stale ) {
 		?>
 		<h2><?php esc_html_e( 'Monitoring', 'uptimewire' ); ?></h2>
 		<?php if ( null === $data ) : ?>
@@ -182,12 +184,13 @@ final class Settings_Page {
 					<th scope="row"><?php esc_html_e( 'External monitoring', 'uptimewire' ); ?></th>
 					<td>
 						<?php
-						$look = Dashboard::look( $headline );
+						$look = $stale ? array( 'unknown', 'dashicons-backup' ) : Dashboard::look( $headline );
 						printf(
 							'<span class="uptimewire-state uptimewire-tone-%1$s"><span class="dashicons %2$s" aria-hidden="true"></span> %3$s</span>',
 							esc_attr( $look[0] ),
 							esc_attr( $look[1] ),
-							esc_html( Dashboard::title( $headline ) )
+							/* translators: %s: the last status UptimeWire reported, such as "Your Website Is Online". */
+							esc_html( $stale ? sprintf( __( 'Last known: %s', 'uptimewire' ), Dashboard::title( $headline ) ) : Dashboard::title( $headline ) )
 						);
 						?>
 					</td>
@@ -245,17 +248,18 @@ final class Settings_Page {
 	/**
 	 * Prints the alert readiness.
 	 *
-	 * @param array<string, mixed>|null $data Kept data of this website.
+	 * @param array<string, mixed>|null $data  Kept data of this website.
+	 * @param bool                      $stale Whether the data is only the last known status.
 	 * @return void
 	 */
-	private static function render_alerts( $data ) {
+	private static function render_alerts( $data, $stale ) {
 		if ( null === $data ) {
 			return;
 		}
 		?>
 		<h2><?php esc_html_e( 'Alerts', 'uptimewire' ); ?></h2>
 		<div class="uptimewire-settings-alerts">
-			<?php Dashboard::render_alert_readiness( $data, Status_Data::headline( $data['site'] ) ); ?>
+			<?php Dashboard::render_alert_readiness( $data, Status_Data::headline( $data['site'] ), $stale ); ?>
 		</div>
 		<?php
 	}

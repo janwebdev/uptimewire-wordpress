@@ -217,7 +217,10 @@ final class SiteHealthTest extends Test_Case {
 				)
 			)
 		);
-		$result = self::results()['uptimewire_access'];
+		$results = self::results();
+		$this->assertSame( 'recommended', $results['uptimewire_monitoring']['status'], 'Blocked checks are a monitoring problem first.' );
+		$this->assertSame( 'UptimeWire reports your website as down, but its checks are being blocked', $results['uptimewire_monitoring']['label'] );
+		$result = $results['uptimewire_access'];
 
 		$this->assertSame( 'recommended', $result['status'] );
 		$this->assertSame( 'A firewall or security plugin may be blocking UptimeWire’s checks', $result['label'] );

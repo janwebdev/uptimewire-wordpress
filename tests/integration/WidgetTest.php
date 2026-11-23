@@ -130,6 +130,7 @@ final class WidgetTest extends Test_Case {
 		$this->assertStringNotContainsString( 'uptimewire-tone-ok', $html );
 		$this->assertStringNotContainsString( 'dashicons-yes-alt', $html );
 		$this->assertStringNotContainsString( 'Your Website Is Online', $html );
+		$this->assertStringNotContainsString( 'Received from UptimeWire', $html, 'The box already says when.' );
 	}
 
 	/**
@@ -254,7 +255,14 @@ final class WidgetTest extends Test_Case {
 			$answer['data']['checks']['ssl'] = $ssl;
 			self::read_status( $answer );
 
-			$this->assertStringContainsString( $words, self::widget(), $words );
+			$html = self::widget();
+			$this->assertStringContainsString( $words, $html, $words );
+
+			if ( 'problem' === $ssl['state'] ) {
+				// Marked, and named under "Needs attention", so a green "online" can't hide it.
+				$this->assertStringContainsString( 'uptimewire-widget-flag uptimewire-tone-' . ( 'expired' === $ssl['warning'] ? 'bad' : 'warn' ), $html, $words );
+				$this->assertMatchesRegularExpression( '#<dt>Needs attention</dt>\s*<dd><span[^>]*><span[^>]*></span> SSL certificate</span></dd>#', $html, $words );
+			}
 		}
 	}
 

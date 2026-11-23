@@ -217,6 +217,13 @@ final class Site_Health {
 				}
 				$lines[] = $checked;
 
+				// Checks turned away by the website: visitors may still get in, so this is a monitoring problem first (see the access test).
+				if ( null !== $site['blocked'] ) {
+					$lines[] = __( 'Your website turns UptimeWire’s checks away, so this may be a firewall or security plugin blocking them rather than real downtime. See the UptimeWire access item.', 'uptimewire' );
+
+					return self::result( 'monitoring', 'recommended', __( 'UptimeWire reports your website as down, but its checks are being blocked', 'uptimewire' ), $lines, $details );
+				}
+
 				return self::result( 'monitoring', 'critical', __( 'UptimeWire reports that your website is down', 'uptimewire' ), $lines, $details );
 			case 'paused':
 				return self::result( 'monitoring', 'recommended', __( 'UptimeWire monitoring is paused', 'uptimewire' ), array( __( 'UptimeWire isn’t checking your website, so there are no new results and no alerts. You can resume monitoring in UptimeWire.', 'uptimewire' ) ), $details . self::link( $open, __( 'Resume in UptimeWire', 'uptimewire' ), true ) );

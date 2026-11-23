@@ -469,6 +469,9 @@ final class DashboardTest extends Test_Case {
 		$this->assertSame( 'Last Known Status', self::primary_title( $html ) );
 		$this->assertStringContainsString( 'hasn’t been updated for a while', $html );
 		$this->assertStringContainsString( 'data-due="1"', $html );
+		$this->assertStringContainsString( 'Current Alert Readiness Is Unknown', $html, 'Old data says nothing about alerts now (WP-4).' );
+		$this->assertStringContainsString( 'Last known: Alerts Are Ready.', $html );
+		$this->assertStringNotContainsString( 'Notifications are configured and monitoring is active.', $html );
 	}
 
 	/**
