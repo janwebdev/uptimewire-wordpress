@@ -53,13 +53,13 @@ final class Fake_Api {
 	/**
 	 * Queues one answer.
 	 *
-	 * @param string               $path    Path such as '/wp/v1/token'.
-	 * @param int                  $status  HTTP status; 0 for a network error.
-	 * @param array<string, mixed> $body    JSON body.
-	 * @param array<string, mixed> $headers Response headers, lower-case names.
+	 * @param string                      $path    Path such as '/wp/v1/token'.
+	 * @param int                         $status  HTTP status; 0 for a network error.
+	 * @param array<string, mixed>|string $body JSON body, or a raw body as it is.
+	 * @param array<string, mixed>        $headers Response headers, lower-case names.
 	 * @return void
 	 */
-	public static function queue( $path, $status, array $body = array(), array $headers = array() ) {
+	public static function queue( $path, $status, $body = array(), array $headers = array() ) {
 		self::$queue[ $path ][] = array(
 			'status'  => $status,
 			'body'    => $body,
@@ -118,7 +118,7 @@ final class Fake_Api {
 
 		return array(
 			'headers'  => $next['headers'],
-			'body'     => wp_json_encode( $next['body'] ),
+			'body'     => is_string( $next['body'] ) ? $next['body'] : wp_json_encode( $next['body'] ),
 			'response' => array(
 				'code'    => $next['status'],
 				'message' => '',

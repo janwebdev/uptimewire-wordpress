@@ -183,6 +183,92 @@ abstract class Test_Case extends TestCase {
 	}
 
 	/**
+	 * Stores a working connection of the test website, as after connecting.
+	 *
+	 * @return void
+	 */
+	protected static function connect_site() {
+		\UptimeWire\Connection::save(
+			self::TOKEN,
+			array(
+				'id'            => '0196a3b2-aaaa-7e3f-8a9b-0c1d2e3f4a5b',
+				'connected_at'  => '2026-11-23T08:37:39+00:00',
+				'site_url'      => 'https://www.customer-site.com',
+				'local_url'     => 'https://www.customer-site.com',
+				'connected_by'  => 1,
+				'account_label' => 'ACC-00001000',
+			)
+		);
+	}
+
+	/**
+	 * A /wp/v1/status answer of the test website, as in the BE-3 contract example.
+	 *
+	 * Times are relative to now, so "ago" texts stay stable.
+	 *
+	 * @param array<string, mixed> $site   Fields of data.site to change.
+	 * @param array<string, mixed> $change Top-level parts of data to replace whole (uptime, checks, events, alerts, links).
+	 * @return array<string, mixed>
+	 */
+	protected static function status_answer( array $site = array(), array $change = array() ) {
+		$at = static function ( $seconds_ago ) {
+			return gmdate( 'Y-m-d\TH:i:s+00:00', time() - $seconds_ago );
+		};
+
+		$data = array(
+			'connection' => array(
+				'id'            => '0196a3b2-aaaa-7e3f-8a9b-0c1d2e3f4a5b',
+				'state'         => 'active',
+				'connected_at'  => '2026-11-23T08:37:39+00:00',
+				'account_label' => 'ACC-00001000',
+			),
+			'site'       => $site + array(
+				'url'                         => 'https://www.customer-site.com',
+				'created_at'                  => $at( 90 * 86400 ),
+				'state'                       => 'up',
+				'paused'                      => false,
+				'awaiting_email_confirmation' => false,
+				'interval_minutes'            => 5,
+				'problem'                     => null,
+				'down_since'                  => null,
+				'last_checked_at'             => $at( 120 ),
+				'last_success_at'             => $at( 120 ),
+				'last_location'               => 'Germany',
+				'average_response_ms_24h'     => 412,
+				'blocked'                     => null,
+			),
+			'uptime'     => array(
+				array( 'window' => '24h', 'from' => $at( 86400 ), 'to' => $at( 0 ), 'measured_seconds' => 86400, 'downtime_seconds' => 0, 'percent' => 100.0, 'history_limited' => false ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+				array( 'window' => '7d', 'from' => $at( 604800 ), 'to' => $at( 0 ), 'measured_seconds' => 604800, 'downtime_seconds' => 600, 'percent' => 99.9, 'history_limited' => false ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+				array( 'window' => '30d', 'from' => $at( 2592000 ), 'to' => $at( 0 ), 'measured_seconds' => 2592000, 'downtime_seconds' => 600, 'percent' => 99.97, 'history_limited' => false ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			),
+			'checks'     => array(
+				'ssl'    => array( 'state' => 'ok', 'checked_at' => $at( 3600 ), 'expires_at' => $at( -79 * 86400 ), 'days_left' => 79, 'warning' => null, 'error' => null ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+				'domain' => array( 'state' => 'ok', 'checked_at' => $at( 3600 ), 'expires_at' => null, 'days_left' => null, 'expiry_known' => false, 'warning' => null, 'error' => null ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+				'dns'    => array( 'state' => 'ok', 'checked_at' => $at( 3600 ), 'changed' => false, 'open_changes' => 0, 'last_change_at' => null ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			),
+			'events'     => array(
+				array( 'type' => 'downtime', 'kind' => 'resolved', 'at' => $at( 3 * 86400 ), 'ended_at' => $at( 3 * 86400 - 600 ), 'duration_seconds' => 600, 'expires_at' => null ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			),
+			'alerts'     => array(
+				'ready'         => true,
+				'channels'      => array( 'email', 'telegram' ),
+				'email_pending' => false,
+			),
+			'links'      => array(
+				'site'   => 'https://app.uptimewire.com/monitors/0193a3b2/view',
+				'alerts' => 'https://app.uptimewire.com/user/profile/notifications',
+				'plans'  => 'https://app.uptimewire.com/subscription-plans',
+			),
+		);
+
+		return array(
+			'data' => $change + $data,
+			'meta' => array( 'server_time' => $at( 0 ) ),
+		);
+	}
+
+	/**
 	 * Output of a callable.
 	 *
 	 * @param callable $render Renderer.

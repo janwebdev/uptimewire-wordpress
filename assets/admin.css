@@ -232,3 +232,361 @@
 		text-align: center;
 	}
 }
+
+/* Monitoring dashboard (WP-3). Words carry every state; color only repeats them. */
+
+.uptimewire-dashboard {
+	--uptimewire-ok: #007017;
+	--uptimewire-warn: #8a5a00;
+	--uptimewire-bad: #b32d2e;
+	--uptimewire-info: #135e96;
+	--uptimewire-off: #50575e;
+	max-width: 1200px;
+}
+
+.uptimewire-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px 24px;
+	margin: 16px 0;
+}
+
+.uptimewire-header-facts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 32px;
+	margin: 0;
+	min-width: 0;
+}
+
+.uptimewire-header-facts dt {
+	color: #50575e;
+	font-size: 12px;
+}
+
+.uptimewire-header-facts dd {
+	margin: 2px 0 0;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.uptimewire-header-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.uptimewire-header-actions form {
+	margin: 0;
+}
+
+.uptimewire-refresh {
+	display: inline-flex !important;
+	align-items: center;
+	gap: 4px;
+}
+
+.uptimewire-refresh .dashicons {
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+}
+
+.uptimewire-refresh.is-busy .dashicons {
+	animation: uptimewire-spin 1s linear infinite;
+}
+
+@keyframes uptimewire-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.uptimewire-refresh.is-busy .dashicons {
+		animation: none;
+	}
+}
+
+.uptimewire-primary {
+	display: flex;
+	gap: 16px;
+	box-sizing: border-box;
+	padding: 20px 24px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-left: 6px solid var(--uptimewire-tone, #50575e);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.uptimewire-primary-icon.dashicons {
+	flex: none;
+	width: 40px;
+	height: 40px;
+	font-size: 40px;
+	color: var(--uptimewire-tone, #50575e);
+}
+
+.uptimewire-primary-body {
+	min-width: 0;
+}
+
+.uptimewire-primary h2 {
+	margin: 4px 0 8px;
+	font-size: 1.6em;
+	line-height: 1.25;
+}
+
+.uptimewire-primary p {
+	max-width: 70ch;
+}
+
+.uptimewire-primary-lead {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.uptimewire-untrusted {
+	overflow-wrap: anywhere;
+	white-space: pre-line;
+}
+
+.uptimewire-sections {
+	display: grid;
+	gap: 24px;
+	margin-top: 24px;
+}
+
+.uptimewire-block-title {
+	margin: 0 0 12px;
+	font-size: 1.3em;
+}
+
+.uptimewire-cards {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 16px;
+	margin: 0;
+}
+
+.uptimewire-card-item {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 16px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-top: 4px solid var(--uptimewire-tone, #50575e);
+	min-width: 0;
+}
+
+.uptimewire-card-title {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 8px;
+	color: #50575e;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.uptimewire-card-value {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+	margin: 0 0 8px;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.uptimewire-card-value .dashicons {
+	flex: none;
+	color: var(--uptimewire-tone, #50575e);
+}
+
+.uptimewire-card-line {
+	margin: 4px 0;
+	overflow-wrap: anywhere;
+}
+
+.uptimewire-muted {
+	color: #50575e;
+}
+
+.uptimewire-card-link {
+	margin: 12px 0 0;
+}
+
+.uptimewire-tone-ok {
+	--uptimewire-tone: var(--uptimewire-ok);
+}
+
+.uptimewire-tone-warn {
+	--uptimewire-tone: var(--uptimewire-warn);
+}
+
+.uptimewire-tone-bad {
+	--uptimewire-tone: var(--uptimewire-bad);
+}
+
+.uptimewire-tone-info {
+	--uptimewire-tone: var(--uptimewire-info);
+}
+
+.uptimewire-tone-off,
+.uptimewire-tone-unknown,
+.uptimewire-sections.is-stale .uptimewire-tone-ok,
+.uptimewire-sections.is-stale .uptimewire-tone-warn,
+.uptimewire-sections.is-stale .uptimewire-tone-bad,
+.uptimewire-sections.is-stale .uptimewire-tone-info {
+	--uptimewire-tone: var(--uptimewire-off);
+}
+
+.uptimewire-table {
+	width: 100%;
+	max-width: 900px;
+	border-collapse: collapse;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+}
+
+.uptimewire-table th,
+.uptimewire-table td {
+	padding: 10px 12px;
+	border-bottom: 1px solid #dcdcde;
+	text-align: left;
+	vertical-align: top;
+}
+
+.uptimewire-table thead th {
+	color: #50575e;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.uptimewire-table tbody th {
+	font-weight: 600;
+}
+
+.uptimewire-table tbody tr:last-child > * {
+	border-bottom: 0;
+}
+
+.uptimewire-percent {
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+}
+
+.uptimewire-events tbody th .dashicons {
+	color: var(--uptimewire-tone, #50575e);
+	vertical-align: text-bottom;
+}
+
+.uptimewire-empty {
+	padding: 16px;
+	background: #fff;
+	border: 1px dashed #c3c4c7;
+	max-width: 900px;
+	box-sizing: border-box;
+}
+
+.uptimewire-alerts {
+	box-sizing: border-box;
+	max-width: 900px;
+	padding: 16px 20px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-left: 4px solid var(--uptimewire-tone, #50575e);
+}
+
+.uptimewire-alerts p {
+	margin: 8px 0;
+}
+
+.uptimewire-channels {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 8px 0;
+}
+
+.uptimewire-channels li {
+	margin: 0;
+	padding: 2px 10px;
+	border: 1px solid #c3c4c7;
+	border-radius: 12px;
+	background: #f6f7f7;
+}
+
+.uptimewire-connection-details {
+	margin-top: 24px;
+	max-width: 900px;
+}
+
+.uptimewire-connection-details summary {
+	cursor: pointer;
+	color: #2271b1;
+}
+
+@media screen and (max-width: 1100px) {
+	.uptimewire-cards {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media screen and (max-width: 600px) {
+	.uptimewire-cards {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.uptimewire-primary {
+		padding: 16px;
+		gap: 12px;
+	}
+
+	.uptimewire-primary-icon.dashicons {
+		width: 28px;
+		height: 28px;
+		font-size: 28px;
+	}
+
+	/* Each table row becomes a small block; the column names come from data-label. */
+	.uptimewire-table thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+	}
+
+	.uptimewire-table,
+	.uptimewire-table tbody,
+	.uptimewire-table tr,
+	.uptimewire-table th,
+	.uptimewire-table td {
+		display: block;
+	}
+
+	.uptimewire-table tr {
+		padding: 8px 12px;
+		border-bottom: 1px solid #dcdcde;
+	}
+
+	.uptimewire-table tbody tr:last-child {
+		border-bottom: 0;
+	}
+
+	.uptimewire-table th,
+	.uptimewire-table td {
+		padding: 2px 0;
+		border: 0;
+	}
+
+	.uptimewire-table td::before {
+		content: attr(data-label) ": ";
+		color: #50575e;
+	}
+}

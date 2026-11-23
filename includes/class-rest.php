@@ -63,6 +63,64 @@ final class Rest {
 				'permission_callback' => array( Plugin::class, 'current_user_can' ),
 			)
 		);
+
+		register_rest_route(
+			self::NAMESPACE_V1,
+			'/status-refresh',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'refresh' ),
+				'permission_callback' => array( Plugin::class, 'current_user_can' ),
+				'args'                => array(
+					'force' => array(
+						'type'    => 'boolean',
+						'default' => false,
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Reads the monitoring status when due (or now, for the Refresh button) and
+	 * answers the dashboard to show. When the connection ended or belongs to
+	 * another website, the answer asks the browser to reload the Overview screen,
+	 * which explains it.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public static function refresh( WP_REST_Request $request ) {
+		$result = Status::refresh( (bool) $request->get_param( 'force' ) );
+
+		if ( State::CONNECTION_ESTABLISHED !== State::current() ) {
+			return self::answer(
+				array(
+					'result'   => $result,
+					'redirect' => Plugin::overview_url(),
+				)
+			);
+		}
+
+		// REST requests don't load the admin screens (uptimewire.php loads them in wp-admin only).
+		foreach ( array( 'class-view.php', 'class-dashboard.php', 'class-overview-page.php', 'class-settings-page.php', 'class-admin.php' ) as $file ) {
+			require_once UPTIMEWIRE_DIR . 'includes/admin/' . $file;
+		}
+
+		ob_start();
+		Admin\Dashboard::render_inner();
+		$html   = (string) ob_get_clean();
+		$status = Status::get();
+
+		return self::answer(
+			array(
+				'result'   => $result,
+				'html'     => $html,
+				'announce' => Admin\Dashboard::announcement(),
+				'ttl'      => Status::ttl( null === $status ? null : $status['data'] ),
+				'due'      => Status::is_due( $status ),
+			)
+		);
 	}
 
 	/**

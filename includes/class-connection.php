@@ -140,6 +140,8 @@ final class Connection {
 		);
 
 		update_option( self::OPTION, $record, false );
+		// Data kept for an earlier connection is not this one's.
+		Status::forget();
 	}
 
 	/**
@@ -154,6 +156,70 @@ final class Connection {
 		}
 
 		return isset( $record['health']['state'] ) && is_string( $record['health']['state'] ) ? $record['health']['state'] : '';
+	}
+
+	/**
+	 * Records that UptimeWire answered for this connection with a website.
+	 *
+	 * Used by every read that names the website (the status answer). When the
+	 * website is not this one, the connection is marked as a mismatch and the
+	 * caller must not show the data.
+	 *
+	 * @param string      $site_url      Website UptimeWire monitors.
+	 * @param string|null $account_label Account number ACC-…, or null when not given.
+	 * @return bool Whether the website is this one.
+	 */
+	public static function confirm( $site_url, $account_label ) {
+		$stored = get_option( self::OPTION, array() );
+		$stored = is_array( $stored ) ? $stored : array();
+		$local  = isset( $stored['local_url'] ) && is_string( $stored['local_url'] ) ? $stored['local_url'] : '';
+		$same   = Site_Match::matches_any( $site_url, Plugin::own_urls() ) && Site_Match::matches_any( $local, Plugin::own_urls() );
+
+		$stored['site_url'] = $site_url;
+		$stored['health']   = array(
+			'state'        => $same ? self::HEALTH_OK : self::HEALTH_MISMATCH,
+			'checked_at'   => time(),
+			'confirmed_at' => time(),
+		);
+
+		if ( null !== $account_label ) {
+			$stored['account_label'] = $account_label;
+		}
+
+		update_option( self::OPTION, $stored, false );
+
+		return $same;
+	}
+
+	/**
+	 * Records that UptimeWire ended the connection: the credential is forgotten.
+	 *
+	 * @return void
+	 */
+	public static function end() {
+		$stored = get_option( self::OPTION, array() );
+		$stored = is_array( $stored ) ? $stored : array();
+		$health = isset( $stored['health'] ) && is_array( $stored['health'] ) ? $stored['health'] : array();
+
+		$health['state']      = self::HEALTH_ENDED;
+		$health['checked_at'] = time();
+		$stored['health']     = $health;
+		unset( $stored['token'] );
+
+		if ( isset( $stored['id'] ) || null !== self::configured_token() ) {
+			update_option( self::OPTION, $stored, false );
+		}
+	}
+
+	/**
+	 * The account number ACC-… UptimeWire last named for this connection, or ''.
+	 *
+	 * @return string
+	 */
+	public static function account_label() {
+		$record = self::get();
+
+		return null !== $record && isset( $record['account_label'] ) ? (string) Status_Data::account_label( $record['account_label'] ) : '';
 	}
 
 	/**
@@ -194,6 +260,11 @@ final class Connection {
 
 		if ( 200 === $answer['status'] && null !== $data && isset( $data['site']['url'] ) && is_string( $data['site']['url'] ) ) {
 			$stored['site_url'] = $data['site']['url'];
+			$label              = Status_Data::account_label( isset( $data['account_label'] ) ? $data['account_label'] : null );
+
+			if ( null !== $label ) {
+				$stored['account_label'] = $label;
+			}
 
 			if ( ! isset( $stored['id'] ) && isset( $data['id'] ) && is_string( $data['id'] ) ) {
 				// A credential configured in wp-config.php before this site ever connected.
@@ -211,6 +282,7 @@ final class Connection {
 			// The connection ended in UptimeWire; the credential is useless and is forgotten.
 			$health['state'] = self::HEALTH_ENDED;
 			unset( $stored['token'] );
+			Status::forget();
 		} elseif ( 429 !== $answer['status'] ) {
 			$health['state'] = self::HEALTH_UNREACHABLE;
 		}

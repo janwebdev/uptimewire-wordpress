@@ -4,7 +4,7 @@ Tags: uptime, monitoring, ssl, downtime, status
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.2.0
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,14 +18,14 @@ UptimeWire checks your website from its own servers on the internet. Because the
 * Get warned before your SSL certificate or domain expires.
 * Free monitoring for one website. No credit card required.
 
-This version (0.2.0) connects your WordPress site to an UptimeWire account: click "Start Free Monitoring" or "Connect Existing Account", approve the connection in UptimeWire, and the plugin finishes connecting by itself. Monitoring results inside WordPress come in a later version; until then you see them in UptimeWire.
+Connect your WordPress site to an UptimeWire account: click "Start Free Monitoring" or "Connect Existing Account", approve the connection in UptimeWire, and the plugin finishes connecting by itself. Then UptimeWire › Overview shows whether your website is online, its SSL certificate, domain and DNS checks, uptime for the last 24 hours, 7 days and 30 days, recent events, and whether alerts can reach you.
 
 == External services ==
 
 This plugin connects your site to UptimeWire (https://uptimewire.com), an external website monitoring service. Nothing is sent until an administrator clicks "Start Free Monitoring" or "Connect Existing Account".
 
 * When you connect: your site address, WordPress and plugin versions, environment type (production, staging and so on) and whether it is a multisite are sent to api.uptimewire.com. You approve the connection on app.uptimewire.com in a new tab. While you approve, the plugin asks api.uptimewire.com every few seconds whether you have finished, and only while the connection screen is open. UptimeWire then requests one address on your site (`/?uptimewire_proof=…`) to confirm that the request came from this WordPress.
-* While connected: when an administrator opens the plugin's screens, the plugin asks api.uptimewire.com whether the connection still works, at most once every 5 minutes.
+* While connected: while an administrator has UptimeWire › Overview open, the plugin reads this website's monitoring status from api.uptimewire.com at most once every 1 to 5 minutes (as often as the website is checked), and when the administrator clicks Refresh. The answer is kept in the option `uptimewire_status`. Other plugin screens ask api.uptimewire.com whether the connection still works, at most once every 5 minutes. Nothing is requested in the background when nobody looks.
 
 No visitor data, user lists or content are sent.
 
@@ -62,6 +62,10 @@ All plugin settings are removed from your database.
 
 == Changelog ==
 
+= 0.3.0 =
+* Monitoring dashboard on Overview: website status, SSL certificate, domain and DNS cards, uptime for 24 hours, 7 and 30 days, recent events, alert readiness, the UptimeWire account number.
+* The status is kept locally and refreshed while the screen is open, or with the Refresh button; when UptimeWire can't be reached, the last known status is shown as such.
+
 = 0.2.0 =
 * Connect the site to an UptimeWire account by code (OAuth 2.0 Device Authorization Grant, RFC 8628): waiting screen, approval in a new tab, site confirmation, address check, clear messages for every outcome.
 * Connection state on Overview and Settings.
@@ -70,6 +74,9 @@ All plugin settings are removed from your database.
 * Plugin foundation: admin menu, welcome screen with environment checks, website address, Help tabs, clean uninstall.
 
 == Upgrade Notice ==
+
+= 0.3.0 =
+Monitoring results inside WordPress.
 
 = 0.2.0 =
 Connecting to UptimeWire.

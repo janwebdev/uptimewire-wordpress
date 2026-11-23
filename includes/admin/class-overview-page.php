@@ -39,7 +39,14 @@ final class Overview_Page {
 			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'uptimewire' ), '', array( 'response' => 403 ) );
 		}
 
-		Connection::check_health();
+		$record = Connection::get();
+
+		// A working connection is confirmed by every status read (see Status), which the screen's
+		// script makes after the page is shown; only other connections are checked before rendering.
+		if ( null === $record || Connection::HEALTH_OK !== Connection::health_state( $record ) ) {
+			Connection::check_health();
+		}
+
 		$state = State::current();
 		?>
 		<div class="wrap uptimewire">
@@ -298,7 +305,7 @@ final class Overview_Page {
 	}
 
 	/**
-	 * Prints the established connection.
+	 * Prints the established connection: the monitoring dashboard and the connection details.
 	 *
 	 * @return void
 	 */
@@ -308,17 +315,13 @@ final class Overview_Page {
 		if ( null === $record ) {
 			return;
 		}
-		?>
-		<div class="uptimewire-card uptimewire-connected">
-			<p class="uptimewire-state-line"><?php self::state_badge( State::CONNECTION_ESTABLISHED ); ?></p>
-			<h2><?php esc_html_e( 'Your WordPress website is connected to UptimeWire.', 'uptimewire' ); ?></h2>
-			<?php self::render_connection_table( $record ); ?>
 
-			<h3><?php esc_html_e( 'Monitoring', 'uptimewire' ); ?></h3>
-			<p><?php esc_html_e( 'Connecting and monitoring are separate steps. This version of the plugin doesn’t show monitoring results yet, so it can’t tell whether the checks have started.', 'uptimewire' ); ?></p>
-			<p><?php esc_html_e( 'Open UptimeWire to see your website’s status. If UptimeWire asks you to confirm your email address, the checks start after you confirm it.', 'uptimewire' ); ?></p>
-			<p><?php View::external_link( self::DASHBOARD, __( 'Open UptimeWire', 'uptimewire' ) ); ?></p>
-		</div>
+		Dashboard::render();
+		?>
+		<details class="uptimewire-connection-details">
+			<summary><?php esc_html_e( 'Connection details', 'uptimewire' ); ?> <?php self::state_badge( State::CONNECTION_ESTABLISHED ); ?></summary>
+			<?php self::render_connection_table( $record ); ?>
+		</details>
 		<?php
 	}
 
@@ -437,6 +440,15 @@ final class Overview_Page {
 					?>
 				</p>
 				<p><?php esc_html_e( 'Don’t reconnect from a copy: that would move the connection away from the original site. If the site moved, change the website address in UptimeWire.', 'uptimewire' ); ?></p>
+				<p><?php esc_html_e( 'After you correct the website address in UptimeWire, check again.', 'uptimewire' ); ?></p>
+				<div class="uptimewire-actions">
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<input type="hidden" name="action" value="<?php echo esc_attr( Admin::REFRESH_ACTION ); ?>">
+						<?php wp_nonce_field( Admin::REFRESH_ACTION ); ?>
+						<button type="submit" class="button button-primary"><?php esc_html_e( 'Check Again', 'uptimewire' ); ?></button>
+					</form>
+					<?php View::external_link( self::DASHBOARD, __( 'Open UptimeWire', 'uptimewire' ) ); ?>
+				</div>
 			<?php elseif ( Connection::HEALTH_BAD_CONSTANT === $health ) : ?>
 				<h2><?php esc_html_e( 'Connection Error', 'uptimewire' ); ?></h2>
 				<p><?php esc_html_e( 'UPTIMEWIRE_TOKEN in wp-config.php is not a valid UptimeWire credential. Correct it, or remove it and connect from this screen.', 'uptimewire' ); ?></p>
@@ -607,6 +619,16 @@ final class Overview_Page {
 			'site_rejected'      => array( 'error', __( 'UptimeWire can’t monitor this website address. It must be a public address starting with https:// or http://, without a query string. Check the website to monitor below.', 'uptimewire' ) ),
 			'unreachable'        => array( 'error', __( 'Couldn’t reach UptimeWire. Nothing was changed. Check that this server can make outgoing HTTPS connections, then try again.', 'uptimewire' ) ),
 			'unexpected'         => array( 'error', __( 'UptimeWire sent an answer the plugin doesn’t understand. Nothing was changed. Please try again later.', 'uptimewire' ) ),
+			'status_refreshed'   => array( 'success', __( 'Showing the latest results from UptimeWire. Refreshing doesn’t run a new check.', 'uptimewire' ) ),
+			'status_busy'        => array( 'info', __( 'The status is already being updated. Reload this page in a few seconds.', 'uptimewire' ) ),
+			'status_wait'        => array(
+				'warning',
+				$wait > 0
+					/* translators: %s: how long to wait, such as "1 min". */
+					? sprintf( __( 'UptimeWire asked to wait before the next update. Try again in %s.', 'uptimewire' ), human_time_diff( time(), time() + $wait ) )
+					: __( 'UptimeWire asked to wait before the next update. Try again later.', 'uptimewire' ),
+			),
+			'status_failed'      => array( 'warning', __( 'Couldn’t get the latest status from UptimeWire. The screen shows the last status received, if any.', 'uptimewire' ) ),
 		);
 
 		if ( ! isset( $notices[ $code ] ) ) {

@@ -11,6 +11,7 @@ use UptimeWire\Authorization;
 use UptimeWire\Plugin;
 use UptimeWire\Rest;
 use UptimeWire\Site_Url;
+use UptimeWire\Status;
 use UptimeWire\State;
 
 defined( 'ABSPATH' ) || exit;
@@ -40,6 +41,9 @@ final class Admin {
 
 	/** Form action and nonce action for closing the result of a failed attempt. */
 	const DISMISS_ACTION = 'uptimewire_connect_dismiss';
+
+	/** Form action and nonce action for reading the monitoring status now (without JavaScript). */
+	const REFRESH_ACTION = 'uptimewire_refresh';
 
 	/** Query argument carrying the result message after a redirect. */
 	const NOTICE_ARG = 'uptimewire_notice';
@@ -78,6 +82,7 @@ final class Admin {
 		add_action( 'admin_post_' . self::CANCEL_ACTION, array( __CLASS__, 'cancel' ) );
 		add_action( 'admin_post_' . self::CHECK_ACTION, array( __CLASS__, 'check' ) );
 		add_action( 'admin_post_' . self::DISMISS_ACTION, array( __CLASS__, 'dismiss' ) );
+		add_action( 'admin_post_' . self::REFRESH_ACTION, array( __CLASS__, 'refresh' ) );
 		add_filter( 'removable_query_args', array( __CLASS__, 'removable_query_args' ) );
 	}
 
@@ -143,8 +148,42 @@ final class Admin {
 			UPTIMEWIRE_VERSION
 		);
 
-		// The script only connects; the screens work without it.
-		if ( self::$screens[0] !== $hook_suffix || ! in_array( State::current(), self::SCRIPT_STATES, true ) ) {
+		if ( self::$screens[0] !== $hook_suffix ) {
+			return;
+		}
+
+		// The scripts connect and refresh; the screens work without them.
+		$state = State::current();
+
+		if ( State::CONNECTION_ESTABLISHED === $state ) {
+			wp_enqueue_script(
+				'uptimewire-dashboard',
+				plugins_url( 'assets/dashboard.js', UPTIMEWIRE_FILE ),
+				array(),
+				UPTIMEWIRE_VERSION,
+				array(
+					'in_footer' => true,
+					'strategy'  => 'defer',
+				)
+			);
+
+			wp_localize_script(
+				'uptimewire-dashboard',
+				'uptimewireDashboard',
+				array(
+					'url'   => rest_url( Rest::NAMESPACE_V1 . '/status-refresh' ),
+					'nonce' => wp_create_nonce( 'wp_rest' ),
+					'text'  => array(
+						'refreshing' => __( 'Refreshing…', 'uptimewire' ),
+						'failed'     => __( 'Couldn’t refresh. Check your connection to this WordPress site and try again.', 'uptimewire' ),
+					),
+				)
+			);
+
+			return;
+		}
+
+		if ( ! in_array( $state, self::SCRIPT_STATES, true ) ) {
 			return;
 		}
 
@@ -312,6 +351,30 @@ final class Admin {
 		Authorization::clear_outcome();
 
 		wp_safe_redirect( Plugin::overview_url() );
+		exit;
+	}
+
+	/**
+	 * Reads the monitoring status now, for browsers without JavaScript and the "Check Again" button.
+	 *
+	 * @return void
+	 */
+	public static function refresh() {
+		self::check_request( self::REFRESH_ACTION );
+		$result  = Status::refresh( true );
+		$notices = array(
+			Status::UPDATED       => 'status_refreshed',
+			Status::FRESH         => 'status_refreshed',
+			Status::BUSY          => 'status_busy',
+			Status::WAIT          => 'status_wait',
+			Status::MISMATCH      => '',
+			Status::ENDED         => '',
+			Status::NOT_CONNECTED => '',
+		);
+		$status  = Status::get();
+		$wait    = Status::WAIT === $result && null !== $status ? $status['retry_at'] - time() : 0;
+
+		wp_safe_redirect( Plugin::overview_url( isset( $notices[ $result ] ) ? $notices[ $result ] : 'status_failed', max( 0, $wait ) ) );
 		exit;
 	}
 

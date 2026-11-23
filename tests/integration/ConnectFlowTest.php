@@ -145,9 +145,10 @@ final class ConnectFlowTest extends Test_Case {
 		$this->assertArrayNotHasKey( 'token', Connection::get(), 'The record handed to screens has no credential.' );
 
 		$html = self::render( array( Overview_Page::class, 'render' ) );
-		$this->assertStringContainsString( 'Your WordPress website is connected to UptimeWire.', $html );
+		$this->assertStringContainsString( 'id="uptimewire-dashboard"', $html );
 		$this->assertStringContainsString( 'Connection Established', $html );
-		$this->assertStringContainsString( 'Connecting and monitoring are separate steps', $html, 'Monitoring is not claimed to have started.' );
+		$this->assertStringContainsString( 'Loading Your Website Status', $html, 'Nothing is claimed before UptimeWire reports the status.' );
+		$this->assertStringNotContainsString( 'Your Website Is Online', $html );
 		$this->assertStringNotContainsString( 'is now monitoring', $html );
 	}
 
