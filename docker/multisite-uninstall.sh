@@ -10,8 +10,10 @@ cd /var/www/html
 WP="wp --allow-root"
 
 $WP core is-installed --network 2>/dev/null || $WP core multisite-convert --title="UW network" >/dev/null
-$WP site list --field=path | grep -q '^/two/$' || $WP site create --slug=two >/dev/null
-$WP site list --field=path | grep -q '^/three/$' || $WP site create --slug=three >/dev/null
+# The list is read whole: "grep -q" on a pipe would end it early and fail under pipefail.
+sites=$($WP site list --field=path)
+grep -q '^/two/$' <<< "$sites" || $WP site create --slug=two >/dev/null
+grep -q '^/three/$' <<< "$sites" || $WP site create --slug=three >/dev/null
 $WP site list --fields=blog_id,url
 
 cat > wp-content/mu-plugins/uw-switch-log.php <<'PHP'
