@@ -31,16 +31,10 @@ function uptimewire_uninstall_revoke( &$budget ) {
 		return;
 	}
 
-	// The WordPress address the connection was made on must be this one: a copy keeps the database, not the address.
-	// Compared by fingerprint, as UptimeWire\Connection::is_copy() does: migration tools rewrite plain addresses.
-	if ( isset( $record['home_key'] ) && is_string( $record['home_key'] ) && '' !== $record['home_key'] ) {
-		$own = hash_equals( $record['home_key'], hash( 'sha256', \UptimeWire\Site_Match::key( home_url( '/' ) ) ) );
-	} else {
-		$saved = get_option( 'uptimewire_site_url', '' );
-		$own   = isset( $record['local_url'] ) && is_string( $record['local_url'] )
-			&& \UptimeWire\Site_Match::matches_any( $record['local_url'], array( is_string( $saved ) && '' !== $saved ? $saved : home_url( '/' ), home_url( '/' ) ) );
-	}
-
+	// Only a connection proven to be this WordPress address's, as UptimeWire\Connection::may_end_remotely()
+	// requires: the address fingerprint, which migration tools can't rewrite. A record without it is never ended.
+	$own    = isset( $record['home_key'] ) && is_string( $record['home_key'] )
+		&& hash_equals( $record['home_key'], hash( 'sha256', \UptimeWire\Site_Match::key( home_url( '/' ) ) ) );
 	$health = isset( $record['health']['state'] ) ? $record['health']['state'] : '';
 
 	if ( ! $own || 'ended' === $health || 'mismatch' === $health ) {

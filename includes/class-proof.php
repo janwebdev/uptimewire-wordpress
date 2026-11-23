@@ -52,7 +52,8 @@ final class Proof {
 
 		$pending = Authorization::pending();
 
-		if ( null === $pending || time() > (int) $pending['expires_at'] + Authorization::PROOF_GRACE || ! hash_equals( (string) $pending['authorization_id'], $label ) ) {
+		// A copy made while connecting holds the same authorization: only the site that started it proves it.
+		if ( null === $pending || time() > (int) $pending['expires_at'] + Authorization::PROOF_GRACE || ! hash_equals( (string) $pending['authorization_id'], $label ) || ! Authorization::is_here( $pending ) ) {
 			return;
 		}
 

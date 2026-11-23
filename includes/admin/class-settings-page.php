@@ -174,7 +174,7 @@ final class Settings_Page {
 	private static function may_disconnect() {
 		$record = Connection::get();
 
-		return Plugin::can_manage() && null !== $record && Connection::may_end_remotely( $record );
+		return Plugin::can_manage() && null !== $record && Connection::is_own( $record ) && Connection::may_touch_constant();
 	}
 
 	/**
@@ -192,7 +192,11 @@ final class Settings_Page {
 				<p><?php esc_html_e( 'This WordPress website will stop displaying monitoring results.', 'uptimewire' ); ?></p>
 				<p><?php esc_html_e( 'UptimeWire will continue monitoring your website and sending configured alerts.', 'uptimewire' ); ?></p>
 				<p><?php esc_html_e( 'Your UptimeWire account, monitoring history, and website settings will remain unchanged.', 'uptimewire' ); ?></p>
-				<?php if ( null !== Connection::configured_token() ) : ?>
+				<?php $record = Connection::get(); ?>
+			<?php if ( null !== $record && ! Connection::may_end_remotely( $record ) && Connection::HEALTH_ENDED !== Connection::health_state( $record ) ) : ?>
+				<p><?php esc_html_e( 'UptimeWire hasn’t confirmed yet that this connection belongs to this WordPress address, so WordPress only forgets it here and doesn’t end it in UptimeWire. Remove it there as well.', 'uptimewire' ); ?></p>
+			<?php endif; ?>
+			<?php if ( null !== Connection::configured_token() ) : ?>
 					<p><strong><?php esc_html_e( 'The credential is in wp-config.php (UPTIMEWIRE_TOKEN). WordPress can’t edit that file: after disconnecting, remove that line yourself.', 'uptimewire' ); ?></strong></p>
 				<?php endif; ?>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="uptimewire-actions">

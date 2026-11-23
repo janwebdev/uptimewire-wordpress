@@ -191,7 +191,7 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_disconnect_revokes_and_forgets() {
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 		self::read_status( self::status_answer() );
 		Fake_Api::reset();
 		Fake_Api::queue( '/wp/v1/revoke', 200, array() );
@@ -226,7 +226,7 @@ final class LifecycleTest extends Test_Case {
 			self::wipe();
 			Fake_Api::reset();
 			update_option( 'uptimewire_site_url', self::SITE, false );
-			self::connect_site();
+			self::connect_on( home_url( '/' ) );
 			Fake_Api::queue( '/wp/v1/revoke', $code, array(), array( 'retry-after' => '30' ) );
 
 			$result = self::post( 'disconnect', Admin::DISCONNECT_ACTION );
@@ -266,7 +266,7 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_disconnect_needs_nonce_and_capability() {
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 
 		$this->assertSame( 'die 403', self::post( 'disconnect', 'bad' ), 'Wrong nonce.' );
 		$this->assertSame( 'die 403', self::post( 'disconnect', '' ), 'No nonce.' );
@@ -292,7 +292,7 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_duplicate_disconnect() {
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 		Fake_Api::queue( '/wp/v1/revoke', 200, array() );
 
 		self::post( 'disconnect', Admin::DISCONNECT_ACTION );
@@ -309,7 +309,7 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_disconnect_already_revoked() {
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 		self::read_status( array( 'error' => array( 'code' => 'connection_ended' ) ), 401 );
 		$this->assertSame( State::RECONNECTION_REQUIRED, State::current() );
 		Fake_Api::reset();
@@ -328,7 +328,7 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_disconnect_unknown_credential_is_ended() {
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 		Fake_Api::queue( '/wp/v1/revoke', 200, '{}' );
 
 		$result = Connection::disconnect();
@@ -343,7 +343,7 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_disconnect_clears_pending_authorization() {
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 		self::read_status( array( 'error' => array( 'code' => 'connection_ended' ) ), 401 );
 		$this->assertTrue( $this->start_connecting()['ok'] );
 		$pending = Authorization::pending();
@@ -371,7 +371,7 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_confirmation_screen() {
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 		self::read_status( self::status_answer() );
 
 		$settings = self::render( array( Settings_Page::class, 'render' ) );
@@ -404,9 +404,9 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_reconnect_after_ended_connection() {
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 		self::read_status( array( 'error' => array( 'code' => 'connection_ended' ) ), 401 );
-		update_option( Connection::UNCONFIRMED_OPTION, array( 'site_url' => 'https://www.customer-site.com', 'account_label' => '', 'at' => time() ), false ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		update_option( Connection::UNCONFIRMED_OPTION, array( 'site_url' => 'https://www.customer-site.com', 'account_label' => 'ACC-00001000', 'at' => time() ), false ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 		$html = self::render( array( Overview_Page::class, 'render' ) );
 		$this->assertStringContainsString( 'Reconnect to UptimeWire', $html );
@@ -435,7 +435,7 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_reconnect_in_another_account_is_said() {
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 		self::read_status( array( 'error' => array( 'code' => 'connection_ended' ) ), 401 );
 		$this->start_connecting();
 		$answer                                = self::token_answer();
@@ -457,7 +457,7 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_reconnect_with_expired_code() {
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 		self::read_status( array( 'error' => array( 'code' => 'connection_ended' ) ), 401 );
 		$this->start_connecting();
 		Fake_Api::queue( '/wp/v1/token', 400, self::oauth_error( 'expired_token' ) );
@@ -558,7 +558,7 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_remove_local_only_for_copies() {
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 
 		$this->assertSame( 'redirect ' . Plugin::settings_url(), self::post( 'remove_local', Admin::REMOVE_LOCAL_ACTION ) );
 		$this->assertSame( self::TOKEN, Connection::token() );
@@ -610,13 +610,135 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_older_connection_records_its_address() {
-		self::connect_site();
+		// Monitored at the WordPress address itself: UptimeWire's answer proves the address.
+		update_option( 'uptimewire_site_url', home_url( '/' ), false );
+		Connection::save( self::TOKEN, array( 'id' => 'x', 'site_url' => home_url( '/' ), 'local_url' => home_url( '/' ), 'connected_by' => 1 ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		$this->assertArrayNotHasKey( 'home_key', Connection::get() );
 
-		self::read_status( self::status_answer() );
+		self::read_status( self::status_answer( array( 'url' => untrailingslashit( home_url( '/' ) ) ) ) );
 
 		$this->assertSame( home_url( '/' ), Connection::get()['home'] );
-		$this->assertSame( Connection::home_key(), Connection::get()['home_key'] );
+		$this->assertTrue( Connection::is_verified( Connection::get() ) );
+	}
+
+	/**
+	 * An older connection monitored at another address ("Website to monitor") is never proven by
+	 * UptimeWire's answer: a copy keeps that option. It is only forgotten here, never ended there.
+	 *
+	 * @return void
+	 */
+	public function test_older_connection_on_a_custom_address_stays_unproven() {
+		self::connect_site();
+		self::read_status( self::status_answer() );
+
+		$this->assertSame( State::CONNECTION_ESTABLISHED, State::current() );
+		$this->assertFalse( Connection::is_verified( Connection::get() ) );
+		Fake_Api::reset();
+
+		$_GET[ Admin::CONFIRM_ARG ] = 'disconnect';
+		$this->assertStringContainsString( 'UptimeWire hasn’t confirmed yet that this connection belongs to this WordPress address', self::render( array( Settings_Page::class, 'render' ) ) );
+		$this->assertSame( 'redirect ' . Plugin::overview_url( 'disconnect_unsure' ), self::post( 'disconnect', Admin::DISCONNECT_ACTION ) );
+		$this->assertSame( array(), Fake_Api::calls(), 'Nothing is ended in UptimeWire.' );
+		$this->assertNull( Connection::get() );
+		$this->assertNotNull( Connection::unconfirmed() );
+	}
+
+	/**
+	 * A failed check never turns "another website" back into a connection that could be ended.
+	 *
+	 * @return void
+	 */
+	public function test_mismatch_survives_a_failed_check() {
+		self::connect_on( home_url( '/' ) );
+		self::read_status( self::status_answer( array( 'url' => 'https://www.other-site.com' ) ) );
+		Fake_Api::queue( '/wp/v1/connection', 0 );
+		Fake_Api::queue( '/wp/v1/connection', 503, array() );
+
+		Connection::check_health( true );
+		Connection::check_health( true );
+
+		$this->assertSame( Connection::HEALTH_MISMATCH, Connection::health_state( Connection::get() ) );
+		$this->assertSame( 'redirect ' . Plugin::overview_url( 'disconnect_refused' ), self::post( 'disconnect', Admin::DISCONNECT_ACTION ) );
+		$this->assertCount( 0, Fake_Api::calls( '/wp/v1/revoke' ) );
+	}
+
+	/**
+	 * A disconnect made by another request while a health check waits for UptimeWire is not undone.
+	 *
+	 * @return void
+	 */
+	public function test_health_check_does_not_bring_back_a_disconnected_connection() {
+		self::connect_on( home_url( '/' ) );
+		Connection::get();
+		$disconnect_meanwhile = static function ( $pre, $args, $url ) {
+			global $wpdb;
+			if ( false !== strpos( $url, '/wp/v1/connection' ) ) {
+				// Another request: the row goes, this request's cached copy stays.
+				$wpdb->delete( $wpdb->options, array( 'option_name' => Connection::OPTION ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			}
+
+			return $pre;
+		};
+		add_filter( 'pre_http_request', $disconnect_meanwhile, 0, 3 );
+		Fake_Api::queue( '/wp/v1/connection', 200, array( 'data' => array( 'id' => 'x', 'site' => array( 'url' => 'https://www.customer-site.com' ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		Connection::check_health( true );
+		remove_filter( 'pre_http_request', $disconnect_meanwhile, 0 );
+
+		Connection::forget_cached();
+		$this->assertFalse( get_option( Connection::OPTION ), 'The credential is not written back.' );
+	}
+
+	/**
+	 * The credential is gone from here (UPTIMEWIRE_TOKEN removed) though UptimeWire never ended it:
+	 * the disconnect says it is not confirmed, never "already ended".
+	 *
+	 * @return void
+	 */
+	public function test_missing_credential_is_not_called_ended() {
+		self::connect_on( home_url( '/' ) );
+		$record = get_option( Connection::OPTION );
+		unset( $record['token'] );
+		update_option( Connection::OPTION, $record, false );
+
+		$result = Connection::disconnect();
+
+		$this->assertSame( Connection::UNCONFIRMED, $result['remote'] );
+		$this->assertSame( array(), Fake_Api::calls() );
+	}
+
+	/**
+	 * A copy made while connecting (the pending authorization copied, its address rewritten by the
+	 * migration tool) neither asks for the original's code nor answers its proof.
+	 *
+	 * @return void
+	 */
+	public function test_copy_made_while_connecting() {
+		$this->start_connecting();
+		$pending = Authorization::pending();
+		update_option( 'home', 'https://staging.customer-site.com' );
+		self::make_due();
+		Fake_Api::reset();
+
+		Authorization::poll();
+
+		$this->assertSame( array(), Fake_Api::calls(), 'The original\'s device code is not used.' );
+		$this->assertSame( 'site_changed', Authorization::outcome()['reason'] );
+		$this->assertFalse( Authorization::is_here( $pending ) );
+	}
+
+	/**
+	 * A new connection to another account leaves the unconfirmed disconnect notice: nothing replaced that credential.
+	 *
+	 * @return void
+	 */
+	public function test_unconfirmed_notice_stays_for_another_account() {
+		update_option( Connection::UNCONFIRMED_OPTION, array( 'site_url' => 'https://www.customer-site.com', 'account_label' => 'ACC-00001000', 'at' => time() ), false ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		Connection::save( self::TOKEN, Connection::identity() + array( 'id' => 'x', 'site_url' => 'https://www.customer-site.com', 'local_url' => self::SITE, 'account_label' => 'ACC-00002000' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->assertNotNull( Connection::unconfirmed() );
+
+		Connection::save( self::TOKEN, Connection::identity() + array( 'id' => 'x', 'site_url' => 'https://www.customer-site.com', 'local_url' => self::SITE, 'account_label' => 'ACC-00001000' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->assertNull( Connection::unconfirmed(), 'The same website and account: replaced in UptimeWire.' );
 	}
 
 	/**
@@ -625,7 +747,7 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_site_url_locked_while_connected() {
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 
 		$result = self::post( 'save_site_url', Admin::SAVE_SITE_URL_ACTION, array( 'uptimewire_site_url' => 'https://www.other-site.com/' ) );
 
@@ -646,7 +768,7 @@ final class LifecycleTest extends Test_Case {
 		$this->assertTrue( Plugin::can_view() );
 		$this->assertTrue( Plugin::can_manage() );
 
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 		self::read_status( self::status_answer() );
 		self::sign_in_editor();
 		$this->assertFalse( Plugin::can_view() );
@@ -666,7 +788,7 @@ final class LifecycleTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_viewer_can_view_but_not_manage() {
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 		self::read_status( self::status_answer() );
 		self::sign_in_viewer();
 
@@ -741,7 +863,7 @@ final class LifecycleTest extends Test_Case {
 				return 'uptimewire_manage_connection';
 			}
 		);
-		self::connect_site();
+		self::connect_on( home_url( '/' ) );
 
 		$this->assertTrue( Plugin::can_view() );
 		$this->assertFalse( Plugin::can_manage() );

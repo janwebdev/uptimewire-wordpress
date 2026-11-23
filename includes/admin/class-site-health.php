@@ -625,7 +625,7 @@ final class Site_Health {
 	private static function monitored_url() {
 		$record = Connection::get();
 
-		if ( null === $record || ! Connection::may_end_remotely( $record ) || ! isset( $record['site_url'] ) || ! is_string( $record['site_url'] ) ) {
+		if ( null === $record || ! Connection::is_own( $record ) || ! isset( $record['site_url'] ) || ! is_string( $record['site_url'] ) ) {
 			return Plugin::site_url();
 		}
 

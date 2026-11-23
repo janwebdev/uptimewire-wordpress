@@ -411,6 +411,10 @@ final class Admin {
 	public static function disconnect() {
 		self::check_request( self::DISCONNECT_ACTION );
 
+		if ( ! Connection::may_touch_constant() ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to change this setting.', 'uptimewire' ), '', array( 'response' => 403 ) );
+		}
+
 		$result = Connection::disconnect();
 
 		if ( Connection::REFUSED === $result['remote'] ) {
@@ -437,9 +441,13 @@ final class Admin {
 	public static function remove_local() {
 		self::check_request( self::REMOVE_LOCAL_ACTION );
 
+		if ( ! Connection::may_touch_constant() ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to change this setting.', 'uptimewire' ), '', array( 'response' => 403 ) );
+		}
+
 		$record = Connection::get();
 
-		if ( null !== $record && Connection::may_end_remotely( $record ) ) {
+		if ( null !== $record && Connection::is_own( $record ) ) {
 			// This installation's own connection is ended with Disconnect, so it ends in UptimeWire too.
 			wp_safe_redirect( Plugin::settings_url() );
 			exit;

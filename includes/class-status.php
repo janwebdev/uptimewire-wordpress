@@ -225,8 +225,7 @@ final class Status {
 	 */
 	private static function store( array $answer ) {
 		// The copy read at the start of this request may be older than a disconnect in another one.
-		wp_cache_delete( Connection::OPTION, 'options' );
-		wp_cache_delete( 'notoptions', 'options' );
+		Connection::forget_cached();
 
 		if ( null === Connection::get() ) {
 			// Disconnected while UptimeWire was answering: nothing is kept.

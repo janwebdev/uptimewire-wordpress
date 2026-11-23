@@ -260,6 +260,7 @@ final class Authorization {
 			'started_at'   => $now,
 			'started_by'   => (int) $user_id,
 			'site_url'     => $site_url,
+			'home_key'     => Connection::home_key(),
 			'status'       => self::PENDING,
 			'notice'       => '',
 		);
@@ -363,7 +364,7 @@ final class Authorization {
 			return self::view();
 		}
 
-		if ( ! Site_Match::matches_any( (string) $pending['site_url'], Plugin::own_urls() ) ) {
+		if ( ! self::is_here( $pending ) ) {
 			// The code was asked for another address: a copy of the site made while connecting, or a changed address.
 			self::finish( $pending, self::OUTCOME_ERROR, 'site_changed' );
 			Lock::release( 'poll' );
@@ -384,6 +385,19 @@ final class Authorization {
 		Lock::release( 'poll' );
 
 		return self::view();
+	}
+
+	/**
+	 * Whether a pending authorization was started on this site: its address,
+	 * and the fingerprint of the WordPress address, which migration tools that
+	 * rewrite the copied database can't change.
+	 *
+	 * @param array<string, mixed> $pending Pending authorization.
+	 * @return bool
+	 */
+	public static function is_here( array $pending ) {
+		return Site_Match::matches_any( (string) $pending['site_url'], Plugin::own_urls() )
+			&& ( ! isset( $pending['home_key'] ) || hash_equals( (string) $pending['home_key'], Connection::home_key() ) );
 	}
 
 	/**
