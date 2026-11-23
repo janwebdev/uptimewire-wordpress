@@ -7,8 +7,11 @@
 
 namespace UptimeWire\Admin;
 
+use UptimeWire\Authorization;
 use UptimeWire\Plugin;
+use UptimeWire\Rest;
 use UptimeWire\Site_Url;
+use UptimeWire\State;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -26,8 +29,34 @@ final class Admin {
 	/** Form action and nonce action for saving the website address. */
 	const SAVE_SITE_URL_ACTION = 'uptimewire_save_site_url';
 
+	/** Form action and nonce action for starting a connection. */
+	const CONNECT_ACTION = 'uptimewire_connect';
+
+	/** Form action and nonce action for cancelling the pending connection. */
+	const CANCEL_ACTION = 'uptimewire_connect_cancel';
+
+	/** Form action and nonce action for asking once whether the person approved (without JavaScript). */
+	const CHECK_ACTION = 'uptimewire_connect_check';
+
+	/** Form action and nonce action for closing the result of a failed attempt. */
+	const DISMISS_ACTION = 'uptimewire_connect_dismiss';
+
 	/** Query argument carrying the result message after a redirect. */
 	const NOTICE_ARG = 'uptimewire_notice';
+
+	/** Query argument carrying the seconds to wait, with some messages. */
+	const WAIT_ARG = 'uptimewire_wait';
+
+	/** States whose Overview screen has connect buttons or the waiting screen, and so loads the script. */
+	const SCRIPT_STATES = array(
+		State::NOT_CONNECTED,
+		State::AUTHORIZATION_PENDING,
+		State::WAITING_FOR_APPROVAL,
+		State::AUTHORIZATION_EXPIRED,
+		State::AUTHORIZATION_DENIED,
+		State::CONNECTION_ERROR,
+		State::RECONNECTION_REQUIRED,
+	);
 
 	/**
 	 * Hook suffixes of the plugin screens, filled when the menu is registered.
@@ -45,6 +74,10 @@ final class Admin {
 		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_styles' ) );
 		add_action( 'admin_post_' . self::SAVE_SITE_URL_ACTION, array( __CLASS__, 'save_site_url' ) );
+		add_action( 'admin_post_' . self::CONNECT_ACTION, array( __CLASS__, 'connect' ) );
+		add_action( 'admin_post_' . self::CANCEL_ACTION, array( __CLASS__, 'cancel' ) );
+		add_action( 'admin_post_' . self::CHECK_ACTION, array( __CLASS__, 'check' ) );
+		add_action( 'admin_post_' . self::DISMISS_ACTION, array( __CLASS__, 'dismiss' ) );
 		add_filter( 'removable_query_args', array( __CLASS__, 'removable_query_args' ) );
 	}
 
@@ -108,6 +141,40 @@ final class Admin {
 			plugins_url( 'assets/admin.css', UPTIMEWIRE_FILE ),
 			array(),
 			UPTIMEWIRE_VERSION
+		);
+
+		// The script only connects; the screens work without it.
+		if ( self::$screens[0] !== $hook_suffix || ! in_array( State::current(), self::SCRIPT_STATES, true ) ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'uptimewire-connect',
+			plugins_url( 'assets/connect.js', UPTIMEWIRE_FILE ),
+			array(),
+			UPTIMEWIRE_VERSION,
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
+		);
+
+		wp_localize_script(
+			'uptimewire-connect',
+			'uptimewireConnect',
+			array(
+				'startUrl'  => rest_url( Rest::NAMESPACE_V1 . '/connect-start' ),
+				'statusUrl' => rest_url( Rest::NAMESPACE_V1 . '/connect-status' ),
+				'nonce'     => wp_create_nonce( 'wp_rest' ),
+				'text'      => array(
+					'waiting'     => __( 'Waiting for your approval in UptimeWire…', 'uptimewire' ),
+					'unreachable' => __( 'UptimeWire is temporarily unreachable. Still waiting — nothing is lost.', 'uptimewire' ),
+					'rateLimited' => __( 'UptimeWire asked us to wait a little before checking again. Still waiting.', 'uptimewire' ),
+					'offline'     => __( 'The connection to your WordPress site was interrupted. Trying again…', 'uptimewire' ),
+					'blocked'     => __( 'Your site blocked the status check. Use “Check Status” after you approve in UptimeWire.', 'uptimewire' ),
+					'expired'     => __( 'The code expired.', 'uptimewire' ),
+				),
+			)
 		);
 	}
 
@@ -196,13 +263,81 @@ final class Admin {
 	}
 
 	/**
-	 * Lets WordPress strip the result message argument from the address bar.
+	 * Starts connecting without JavaScript (and as the fallback of the script).
+	 *
+	 * @return void
+	 */
+	public static function connect() {
+		self::check_request( self::CONNECT_ACTION );
+
+		$result = Authorization::start( get_current_user_id(), ! empty( $_POST['uptimewire_understand'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checked in check_request().
+
+		wp_safe_redirect( Plugin::overview_url( $result['ok'] ? '' : $result['error'], $result['retry_after'] ) );
+		exit;
+	}
+
+	/**
+	 * Cancels the pending connection.
+	 *
+	 * @return void
+	 */
+	public static function cancel() {
+		self::check_request( self::CANCEL_ACTION );
+		Authorization::cancel();
+
+		wp_safe_redirect( Plugin::overview_url( 'cancelled' ) );
+		exit;
+	}
+
+	/**
+	 * Asks UptimeWire once whether the person approved, for browsers without JavaScript.
+	 *
+	 * @return void
+	 */
+	public static function check() {
+		self::check_request( self::CHECK_ACTION );
+		$view = Authorization::poll();
+
+		wp_safe_redirect( Plugin::overview_url( State::CONNECTION_ESTABLISHED === $view['state'] ? 'connected' : '' ) );
+		exit;
+	}
+
+	/**
+	 * Closes the result of a failed attempt and shows the welcome screen again.
+	 *
+	 * @return void
+	 */
+	public static function dismiss() {
+		self::check_request( self::DISMISS_ACTION );
+		Authorization::clear_outcome();
+
+		wp_safe_redirect( Plugin::overview_url() );
+		exit;
+	}
+
+	/**
+	 * Stops a form request without the capability or a valid nonce.
+	 *
+	 * @param string $action Nonce action.
+	 * @return void
+	 */
+	private static function check_request( $action ) {
+		if ( ! Plugin::current_user_can() ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to change this setting.', 'uptimewire' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( $action );
+	}
+
+	/**
+	 * Lets WordPress strip the result message arguments from the address bar.
 	 *
 	 * @param string[] $args Removable query arguments.
 	 * @return string[]
 	 */
 	public static function removable_query_args( $args ) {
 		$args[] = self::NOTICE_ARG;
+		$args[] = self::WAIT_ARG;
 
 		return $args;
 	}
@@ -213,6 +348,6 @@ final class Admin {
 	 * @return string
 	 */
 	public static function overview_url() {
-		return admin_url( 'admin.php?page=' . self::OVERVIEW_SLUG );
+		return Plugin::overview_url();
 	}
 }

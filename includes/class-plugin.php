@@ -66,6 +66,17 @@ final class Plugin {
 	}
 
 	/**
+	 * Addresses of this website: the website to monitor and the WordPress Site Address.
+	 *
+	 * A website UptimeWire reports is this site only when it matches one of them.
+	 *
+	 * @return string[]
+	 */
+	public static function own_urls() {
+		return array_values( array_unique( array( self::site_url(), home_url( '/' ) ) ) );
+	}
+
+	/**
 	 * Whether the administrator replaced the WordPress Site Address.
 	 *
 	 * @return bool
@@ -74,6 +85,27 @@ final class Plugin {
 		$saved = get_option( self::OPTION_SITE_URL, '' );
 
 		return is_string( $saved ) && '' !== $saved;
+	}
+
+	/**
+	 * URL of the Overview screen, optionally with a result message.
+	 *
+	 * @param string $notice      Message code for the next screen, or ''.
+	 * @param int    $retry_after Seconds to wait, shown with some messages.
+	 * @return string
+	 */
+	public static function overview_url( $notice = '', $retry_after = 0 ) {
+		$url = admin_url( 'admin.php?page=uptimewire' );
+
+		if ( '' !== $notice ) {
+			$url = add_query_arg( 'uptimewire_notice', $notice, $url );
+		}
+
+		if ( $retry_after > 0 ) {
+			$url = add_query_arg( 'uptimewire_wait', (int) $retry_after, $url );
+		}
+
+		return $url;
 	}
 
 	/**

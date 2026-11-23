@@ -10,3 +10,4 @@ define( 'ABSPATH', __DIR__ . '/' ); // phpcs:ignore WordPress.NamingConventions.
 require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 require_once dirname( __DIR__ ) . '/includes/class-environment.php';
 require_once dirname( __DIR__ ) . '/includes/class-site-url.php';
+require_once dirname( __DIR__ ) . '/includes/class-site-match.php';

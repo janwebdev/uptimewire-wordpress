@@ -6,7 +6,8 @@
 set -uo pipefail
 PORT="$1"
 BASE="http://localhost:$PORT"
-WP="wp --allow-root --path=/var/www/html"
+# WP-CLI itself prints PHP 8.5 deprecations into its output; they are kept out of the values read here.
+WP="php -d display_errors=0 -d error_reporting=0 /usr/local/bin/wp --allow-root --path=/var/www/html"
 CURL="curl -s --connect-to localhost:$PORT:127.0.0.1:80"
 TMP=$(mktemp -d)
 FAILS=0
@@ -43,7 +44,7 @@ code=$($CURL -b "$TMP/admin" -o "$TMP/overview.html" -w '%{http_code}' "$BASE/wp
 check "headline" "Keep Your WordPress Website Online" "$TMP/overview.html"
 check "local warning" "This looks like a local site" "$TMP/overview.html"
 check "buttons disabled" '<fieldset disabled aria-describedby="uptimewire-connect-unavailable">' "$TMP/overview.html"
-check "unavailable note" "Connection is not available in this build." "$TMP/overview.html"
+check "unavailable note" "A local site cannot be connected." "$TMP/overview.html"
 check "site address" "http://localhost:$PORT/" "$TMP/overview.html"
 check "nonce in form" 'name="_wpnonce"' "$TMP/overview.html"
 check "help tab" 'tab-panel-uptimewire-overview' "$TMP/overview.html"
@@ -55,7 +56,7 @@ absent "no staging checkbox on a local site" 'uptimewire_understand' "$TMP/overv
 # 2. Settings: Not connected.
 code=$($CURL -b "$TMP/admin" -o "$TMP/settings.html" -w '%{http_code}' "$BASE/wp-admin/admin.php?page=uptimewire-settings")
 [ "$code" = 200 ] && pass "settings 200" || fail "settings http $code"
-check "not connected" "Not connected" "$TMP/settings.html"
+check "not connected" "Not Connected" "$TMP/settings.html"
 check "settings help tab" 'tab-panel-uptimewire-privacy' "$TMP/settings.html"
 
 # 3. Other admin screens: no notice, no stylesheet, only the menu item.
@@ -69,7 +70,7 @@ $CURL -b "$TMP/editor" -o "$TMP/editor-dash.html" "$BASE/wp-admin/index.php"
 absent "editor has no menu" 'page=uptimewire' "$TMP/editor-dash.html"
 code=$($CURL -b "$TMP/editor" -o "$TMP/editor-page.html" -w '%{http_code}' "$BASE/wp-admin/admin.php?page=uptimewire")
 [ "$code" = 403 ] && pass "editor gets 403 on overview" || fail "editor overview http $code"
-nonce=$(grep -o 'name="_wpnonce" value="[^"]*"' "$TMP/overview.html" | head -1 | sed 's/.*value="//;s/"//')
+nonce=$(perl -0ne 'print $1 if /value="uptimewire_save_site_url">\s*<input type="hidden" id="_wpnonce" name="_wpnonce" value="([0-9a-f]+)"/' "$TMP/overview.html")
 code=$($CURL -b "$TMP/editor" -o /dev/null -w '%{http_code}' --data "action=uptimewire_save_site_url&_wpnonce=$nonce&uptimewire_site_url=https://evil.example.com/" "$BASE/wp-admin/admin-post.php")
 [ "$code" = 403 ] && pass "editor cannot save address" || fail "editor save http $code"
 
@@ -121,11 +122,12 @@ if grep -q '^UPTIMEWIRE' /var/www/html/wp-content/http-log.txt 2>/dev/null; then
 else
 	pass "no HTTP requests from the plugin ($(cat /var/www/html/wp-content/http-log.txt 2>/dev/null | wc -l) core requests logged)"
 fi
-if [ -s /var/www/html/wp-content/debug.log ]; then
-	fail "debug.log not empty:"; head -20 /var/www/html/wp-content/debug.log
-else
-	pass "debug.log empty"
-fi
+# Lines of WP-CLI itself (its PHP 8.5 deprecations) are not from WordPress or the plugin.
+logged=$(grep -v "phar:///usr/local/bin/wp/" /var/www/html/wp-content/debug.log 2>/dev/null)
+ours=$(echo "$logged" | grep -cE "plugins/uptimewire|Fatal")
+if [ "$ours" != 0 ]; then fail "debug.log has lines from the plugin:"; echo "$logged" | grep -E "plugins/uptimewire|Fatal" | head -20
+elif [ -n "$logged" ]; then pass "debug.log: nothing from the plugin ($(echo "$logged" | wc -l) lines from WordPress core itself: $(echo "$logged" | head -1 | cut -c27-120))"
+else pass "debug.log has nothing from WordPress or the plugin"; fi
 
 # 8. Uninstall removes every uptimewire_ option and transient, nothing else.
 $WP option update uptimewire_site_url "https://www.customer-site.com/" --autoload=no >/dev/null

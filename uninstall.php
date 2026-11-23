@@ -42,6 +42,11 @@ function uptimewire_uninstall_option_names( $table ) {
  * @return void
  */
 function uptimewire_uninstall_delete( array $names ) {
+	// With a persistent object cache these live only in that cache, not in the table.
+	foreach ( array( 'uptimewire_pending', 'uptimewire_cancelled', 'uptimewire_proof_seen' ) as $transient ) {
+		delete_transient( $transient );
+	}
+
 	foreach ( $names as $name ) {
 		if ( 0 === strpos( $name, '_transient_timeout_' ) ) {
 			continue;

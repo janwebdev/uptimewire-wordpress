@@ -1,12 +1,14 @@
 # Test stand for the plugin. Unique names so it never touches other stands:
-#   docker compose -p uw-wp1 -f docker/compose.yaml up -d --build
-#   docker compose -p uw-wp1 -f docker/compose.yaml down -v
-name: uw-wp1
+#   docker compose -p uw-wp2 -f docker/compose.yaml up -d --build
+#   docker compose -p uw-wp2 -f docker/compose.yaml down -v
+# The sites live on 11.77.42.0/24: a range UptimeWire does not treat as internal,
+# so a local copy of UptimeWire can fetch the proof from them (docker/live.sh).
+name: uw-wp2
 
 services:
   db:
     image: mariadb:11.4
-    container_name: uw-wp1-db
+    container_name: uw-wp2-db
     environment:
       MARIADB_ROOT_PASSWORD: stand-root
       MARIADB_DATABASE: wp74
@@ -14,36 +16,56 @@ services:
       MARIADB_PASSWORD: stand-wp
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
-      - uw-wp1-db:/var/lib/mysql
+      - uw-wp2-db:/var/lib/mysql
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
-    networks: [uw-wp1-net]
+    networks:
+      uw-wp2-pub: { ipv4_address: 11.77.42.10 }
 
   php74:
     build: { context: ., args: { PHP_VERSION: "7.4" } }
-    image: uw-wp1-php74
-    container_name: uw-wp1-php74
+    image: uw-wp2-php74
+    container_name: uw-wp2-php74
     depends_on: [db]
-    ports: ["127.0.0.1:18741:80"]
+    ports: ["127.0.0.1:18751:80"]
     volumes:
-      - uw-wp1-www74:/var/www/html
+      - uw-wp2-www74:/var/www/html
       - ..:/src:ro
-    networks: [uw-wp1-net]
+    networks:
+      uw-wp2-pub: { ipv4_address: 11.77.42.74 }
 
   php83:
     build: { context: ., args: { PHP_VERSION: "8.3" } }
-    image: uw-wp1-php83
-    container_name: uw-wp1-php83
+    image: uw-wp2-php83
+    container_name: uw-wp2-php83
     depends_on: [db]
-    ports: ["127.0.0.1:18742:80"]
+    ports: ["127.0.0.1:18752:80"]
     volumes:
-      - uw-wp1-www83:/var/www/html
+      - uw-wp2-www83:/var/www/html
       - ..:/src:ro
-    networks: [uw-wp1-net]
+    networks:
+      uw-wp2-pub: { ipv4_address: 11.77.42.83 }
+
+  php85:
+    build: { context: ., args: { PHP_VERSION: "8.5" } }
+    image: uw-wp2-php85
+    container_name: uw-wp2-php85
+    depends_on: [db]
+    ports: ["127.0.0.1:18753:80"]
+    volumes:
+      - uw-wp2-www85:/var/www/html
+      - ..:/src:ro
+    networks:
+      uw-wp2-pub: { ipv4_address: 11.77.42.85 }
 
 volumes:
-  uw-wp1-db: { name: uw-wp1-db }
-  uw-wp1-www74: { name: uw-wp1-www74 }
-  uw-wp1-www83: { name: uw-wp1-www83 }
+  uw-wp2-db: { name: uw-wp2-db }
+  uw-wp2-www74: { name: uw-wp2-www74 }
+  uw-wp2-www83: { name: uw-wp2-www83 }
+  uw-wp2-www85: { name: uw-wp2-www85 }
 
 networks:
-  uw-wp1-net: { name: uw-wp1-net }
+  uw-wp2-pub:
+    name: uw-wp2-pub
+    ipam:
+      config:
+        - subnet: 11.77.42.0/24
