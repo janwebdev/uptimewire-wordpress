@@ -76,6 +76,11 @@ final class Rest {
 						'type'    => 'boolean',
 						'default' => false,
 					),
+					'view'  => array(
+						'type'    => 'string',
+						'enum'    => array( 'overview', 'widget' ),
+						'default' => 'overview',
+					),
 				),
 			)
 		);
@@ -83,17 +88,18 @@ final class Rest {
 
 	/**
 	 * Reads the monitoring status when due (or now, for the Refresh button) and
-	 * answers the dashboard to show. When the connection ended or belongs to
-	 * another website, the answer asks the browser to reload the Overview screen,
-	 * which explains it.
+	 * answers the markup to show: the Overview dashboard, or the Dashboard widget
+	 * for view "widget". When the connection ended or belongs to another website,
+	 * the Overview is reloaded, which explains it; the widget explains it itself.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response
 	 */
 	public static function refresh( WP_REST_Request $request ) {
 		$result = Status::refresh( (bool) $request->get_param( 'force' ) );
+		$widget = 'widget' === $request->get_param( 'view' );
 
-		if ( State::CONNECTION_ESTABLISHED !== State::current() ) {
+		if ( ! $widget && State::CONNECTION_ESTABLISHED !== State::current() ) {
 			return self::answer(
 				array(
 					'result'   => $result,
@@ -103,12 +109,16 @@ final class Rest {
 		}
 
 		// REST requests don't load the admin screens (uptimewire.php loads them in wp-admin only).
-		foreach ( array( 'class-view.php', 'class-dashboard.php', 'class-overview-page.php', 'class-settings-page.php', 'class-admin.php' ) as $file ) {
+		foreach ( array( 'class-view.php', 'class-dashboard.php', 'class-overview-page.php', 'class-settings-page.php', 'class-widget.php', 'class-admin.php' ) as $file ) {
 			require_once UPTIMEWIRE_DIR . 'includes/admin/' . $file;
 		}
 
 		ob_start();
-		Admin\Dashboard::render_inner();
+		if ( $widget ) {
+			Admin\Widget::render_inner();
+		} else {
+			Admin\Dashboard::render_inner();
+		}
 		$html   = (string) ob_get_clean();
 		$status = Status::get();
 
@@ -116,7 +126,7 @@ final class Rest {
 			array(
 				'result'   => $result,
 				'html'     => $html,
-				'announce' => Admin\Dashboard::announcement(),
+				'announce' => $widget ? Admin\Widget::announcement() : Admin\Dashboard::announcement(),
 				'ttl'      => Status::ttl( null === $status ? null : $status['data'] ),
 				'due'      => Status::is_due( $status ),
 			)

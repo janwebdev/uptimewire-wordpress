@@ -269,6 +269,53 @@ abstract class Test_Case extends TestCase {
 	}
 
 	/**
+	 * Reads one queued /wp/v1/status answer into the kept status.
+	 *
+	 * @param array<string, mixed>|string $body    Answer body.
+	 * @param int                         $code    HTTP status.
+	 * @param array<string, string>       $headers Response headers.
+	 * @return string Status::refresh() result.
+	 */
+	protected static function read_status( $body, $code = 200, array $headers = array() ) {
+		Fake_Api::queue( '/wp/v1/status', $code, $body, $headers );
+
+		return \UptimeWire\Status::refresh( true );
+	}
+
+	/**
+	 * Makes the kept status older, as if time passed without a read.
+	 *
+	 * @param int $seconds Seconds.
+	 * @return void
+	 */
+	protected static function make_status_older( $seconds ) {
+		$kept                  = get_option( \UptimeWire\Status::OPTION );
+		$kept['fetched_at']   -= $seconds;
+		$kept['attempted_at'] -= $seconds;
+		$kept['retry_at']      = 0;
+		update_option( \UptimeWire\Status::OPTION, $kept, false );
+	}
+
+	/**
+	 * Signs in an editor: a user without the plugin's capability.
+	 *
+	 * @return int User ID.
+	 */
+	protected static function sign_in_editor() {
+		$editor = get_user_by( 'login', 'uw-test-editor' );
+		$id     = $editor ? $editor->ID : wp_insert_user(
+			array(
+				'user_login' => 'uw-test-editor',
+				'user_pass'  => wp_generate_password(),
+				'role'       => 'editor',
+			)
+		);
+		wp_set_current_user( $id );
+
+		return $id;
+	}
+
+	/**
 	 * Output of a callable.
 	 *
 	 * @param callable $render Renderer.

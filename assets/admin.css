@@ -520,6 +520,27 @@
 	margin: 8px 0;
 }
 
+.uptimewire-subtitle {
+	margin: 16px 0 4px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.uptimewire-check-list,
+.uptimewire-troubleshooting {
+	margin: 0;
+}
+
+.uptimewire-troubleshooting {
+	max-width: 70ch;
+	list-style: disc;
+	padding-left: 20px;
+}
+
+.uptimewire-troubleshooting li {
+	margin-bottom: 10px;
+}
+
 .uptimewire-channels li {
 	margin: 0;
 	padding: 2px 10px;

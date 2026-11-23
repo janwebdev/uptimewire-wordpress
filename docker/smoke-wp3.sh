@@ -81,7 +81,7 @@ NONCE_FORM=$(form_nonce uptimewire_refresh "$TMP/overview.html")
 
 echo "--- assets only on the plugin's screens"
 $CURL -b "$TMP/admin" -o "$TMP/dash.html" "$BASE/wp-admin/index.php"
-absent "no script on the WordPress dashboard" 'uptimewire/assets/dashboard.js' "$TMP/dash.html"
+check "the Dashboard widget refreshes with the same script (WP-4)" 'uptimewire/assets/dashboard.js' "$TMP/dash.html"
 absent "no styles on the WordPress dashboard" 'uptimewire/assets/admin.css' "$TMP/dash.html"
 page "$TMP/admin" "$TMP/settings.html" uptimewire-settings >/dev/null
 absent "no dashboard script on Settings" 'uptimewire/assets/dashboard.js' "$TMP/settings.html"

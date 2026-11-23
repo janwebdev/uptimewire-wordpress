@@ -1,26 +1,33 @@
 /**
- * UptimeWire Overview dashboard: renews the status after the page is shown,
- * while the tab is visible, and on Refresh. Without this script the Refresh
- * button submits a normal form and the screen still works.
+ * UptimeWire Overview dashboard and Dashboard widget: renews the status after
+ * the page is shown, while the tab and the box are visible, and on Refresh.
+ * Without this script the Refresh button submits a normal form and the screen
+ * still works.
  *
- * The server renders the dashboard (escaped there); this script only swaps
- * that markup in and announces the new status to screen readers.
+ * The server renders the markup (escaped there); this script only swaps it in
+ * and announces the new status to screen readers.
  */
 ( function () {
 	'use strict';
 
 	var settings = window.uptimewireDashboard;
-	var box = document.getElementById( 'uptimewire-dashboard' );
-	var live = document.getElementById( 'uptimewire-live' );
+	var box = settings ? document.getElementById( settings.container || 'uptimewire-dashboard' ) : null;
+	var live = box ? box.previousElementSibling : null;
+	var view = settings && 'widget' === settings.view ? 'widget' : 'overview';
 
 	if ( ! settings || ! box || ! window.fetch ) {
 		return;
 	}
 
+	if ( live && 'status' !== live.getAttribute( 'role' ) ) {
+		live = null;
+	}
+
 	var ttl = Math.max( 60, parseInt( box.getAttribute( 'data-ttl' ), 10 ) || 300 ) * 1000;
 	var busy = false;
 	var lastRun = Date.now();
-	var lastAnnounce = '';
+	// The widget does not speak on its first update: the Dashboard is not about it.
+	var lastAnnounce = 'widget' === view ? null : '';
 	var timer = null;
 
 	function say( text ) {
@@ -32,6 +39,11 @@
 		window.setTimeout( function () {
 			live.textContent = text;
 		}, 100 );
+	}
+
+	// A widget hidden in Screen Options or collapsed is not read: nobody sees it.
+	function shown() {
+		return 'visible' === document.visibilityState && null !== box.offsetParent;
 	}
 
 	function refreshButton() {
@@ -59,7 +71,7 @@
 	function schedule( ms ) {
 		window.clearTimeout( timer );
 		timer = window.setTimeout( function () {
-			if ( 'visible' === document.visibilityState ) {
+			if ( shown() ) {
 				run( false );
 			} else {
 				schedule( ttl );
@@ -83,7 +95,7 @@
 				'Content-Type': 'application/json',
 				'X-WP-Nonce': settings.nonce,
 			},
-			body: JSON.stringify( { force: force } ),
+			body: JSON.stringify( { force: force, view: view } ),
 		} )
 			.then( function ( response ) {
 				if ( ! response.ok ) {
@@ -111,7 +123,7 @@
 				if ( hadFocus && refreshButton() ) {
 					refreshButton().focus();
 				}
-				if ( force || answer.announce !== lastAnnounce ) {
+				if ( force || ( null !== lastAnnounce && answer.announce !== lastAnnounce ) ) {
 					say( answer.announce );
 				}
 				lastAnnounce = answer.announce;
@@ -135,12 +147,12 @@
 	} );
 
 	document.addEventListener( 'visibilitychange', function () {
-		if ( 'visible' === document.visibilityState && Date.now() - lastRun >= ttl ) {
+		if ( shown() && Date.now() - lastRun >= ttl ) {
 			run( false );
 		}
 	} );
 
-	if ( '1' === box.getAttribute( 'data-due' ) ) {
+	if ( '1' === box.getAttribute( 'data-due' ) && shown() ) {
 		run( false );
 	} else {
 		schedule( ttl );

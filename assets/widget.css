@@ -1,0 +1,116 @@
+/* UptimeWire Dashboard widget. Loaded only on the Dashboard, for users who see the widget. */
+
+.uptimewire-widget {
+	--uptimewire-ok: #007017;
+	--uptimewire-warn: #8a5a00;
+	--uptimewire-bad: #b32d2e;
+	--uptimewire-info: #135e96;
+	--uptimewire-off: #50575e;
+}
+
+.uptimewire-widget .uptimewire-tone-ok {
+	--uptimewire-tone: var(--uptimewire-ok);
+	--uptimewire-tint: #f0f6f1;
+}
+
+.uptimewire-widget .uptimewire-tone-warn {
+	--uptimewire-tone: var(--uptimewire-warn);
+	--uptimewire-tint: #fcf9e8;
+}
+
+.uptimewire-widget .uptimewire-tone-bad {
+	--uptimewire-tone: var(--uptimewire-bad);
+	--uptimewire-tint: #fcf0f1;
+}
+
+.uptimewire-widget .uptimewire-tone-info {
+	--uptimewire-tone: var(--uptimewire-info);
+	--uptimewire-tint: #f0f6fc;
+}
+
+.uptimewire-widget .uptimewire-tone-off,
+.uptimewire-widget .uptimewire-tone-unknown {
+	--uptimewire-tone: var(--uptimewire-off);
+	--uptimewire-tint: #f6f7f7;
+}
+
+.uptimewire-widget-status {
+	display: flex;
+	gap: 10px;
+	padding: 10px 12px;
+	background: var(--uptimewire-tint, #f6f7f7);
+	border-left: 4px solid var(--uptimewire-tone, #50575e);
+}
+
+.uptimewire-widget-icon.dashicons {
+	flex: none;
+	width: 24px;
+	height: 24px;
+	font-size: 24px;
+	color: var(--uptimewire-tone, #50575e);
+}
+
+.uptimewire-widget-body {
+	min-width: 0;
+}
+
+#dashboard-widgets .uptimewire-widget-title {
+	margin: 0;
+	padding: 0;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+.uptimewire-widget-body p {
+	margin: 4px 0 0;
+}
+
+.uptimewire-widget-facts {
+	margin: 12px 0 0;
+}
+
+.uptimewire-widget-facts div {
+	display: grid;
+	grid-template-columns: minmax(7em, auto) 1fr;
+	gap: 8px;
+	padding: 4px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.uptimewire-widget-facts dt {
+	color: #50575e;
+}
+
+.uptimewire-widget-facts dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.uptimewire-widget-note {
+	color: #50575e;
+}
+
+.uptimewire-widget-footer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.uptimewire-widget-footer p {
+	margin: 0;
+}
+
+.uptimewire-widget-synced {
+	color: #50575e;
+}
+
+@media screen and (max-width: 480px) {
+	.uptimewire-widget-facts div {
+		grid-template-columns: 1fr;
+		gap: 0;
+	}
+}

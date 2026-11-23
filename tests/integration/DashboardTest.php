@@ -90,7 +90,7 @@ final class DashboardTest extends Test_Case {
 		$this->assertStringContainsString( 'Uptime, 30 days: 99.97%', $html );
 		$this->assertStringContainsString( 'Average response, 24 hours: 412 ms', $html );
 		$this->assertStringContainsString( '>100%<', str_replace( array( "\t", "\n" ), '', $html ) );
-		$this->assertStringContainsString( 'Alerts are ready', $html );
+		$this->assertStringContainsString( 'Alerts Are Ready', $html );
 		$this->assertStringContainsString( '<li>Email</li>', $html );
 		$this->assertStringContainsString( '<li>Telegram</li>', $html );
 		$this->assertStringContainsString( 'Website was down', $html );
@@ -341,13 +341,13 @@ final class DashboardTest extends Test_Case {
 	 */
 	public function alert_cases() {
 		return array(
-			'ready'            => array( array(), array( 'ready' => true, 'channels' => array( 'email' ), 'email_pending' => false ), array( 'Alerts are ready', '<li>Email</li>', 'Alert settings in UptimeWire' ), array( 'Configure Alerts in UptimeWire' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-			'no channels'      => array( array(), array( 'ready' => false, 'channels' => array(), 'email_pending' => false ), array( 'Alerts can’t reach you right now', 'No alert channel is set up', 'Configure Alerts in UptimeWire' ), array( 'Alerts are ready' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-			'not ready'        => array( array(), array( 'ready' => false, 'channels' => array( 'webhook' ), 'email_pending' => false ), array( 'None of the alert channels', '<li>Webhook</li>', 'Configure Alerts in UptimeWire' ), array( 'Alerts are ready' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			'ready'            => array( array(), array( 'ready' => true, 'channels' => array( 'email' ), 'email_pending' => false ), array( 'Alerts Are Ready', '<li>Email</li>', 'Alert settings in UptimeWire' ), array( 'Configure Alerts in UptimeWire' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			'no channels'      => array( array(), array( 'ready' => false, 'channels' => array(), 'email_pending' => false ), array( 'Alerts Can’t Reach You Right Now', 'No alert channel is set up', 'Configure Alerts in UptimeWire' ), array( 'Alerts Are Ready' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			'not ready'        => array( array(), array( 'ready' => false, 'channels' => array( 'webhook' ), 'email_pending' => false ), array( 'None of the alert channels', '<li>Webhook</li>', 'Configure Alerts in UptimeWire' ), array( 'Alerts Are Ready' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			'email pending'    => array( array(), array( 'ready' => true, 'channels' => array( 'email' ), 'email_pending' => true ), array( 'waiting for confirmation' ), array() ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-			'paused'           => array( array( 'state' => 'paused', 'paused' => true ), array( 'ready' => false, 'channels' => array( 'email' ), 'email_pending' => false ), array( 'Monitoring is paused, so no alerts are sent.' ), array( 'Alerts are ready' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			'paused'           => array( array( 'state' => 'paused', 'paused' => true ), array( 'ready' => false, 'channels' => array( 'email' ), 'email_pending' => false ), array( 'Monitoring Is Paused', 'Your notification channels remain configured, but monitoring alerts are currently inactive.', 'Configured Notification Channels', '<li>Email</li>' ), array( 'Alerts Are Ready' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			'every channel'    => array( array(), array( 'ready' => true, 'channels' => array( 'email', 'telegram', 'slack', 'discord', 'sms', 'webhook', 'teams', 'carrier-pigeon' ), 'email_pending' => false ), array( '<li>Slack</li>', '<li>Discord</li>', '<li>SMS</li>', '<li>Microsoft Teams</li>', '<li>Other</li>' ), array( 'carrier-pigeon' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-			'unverified email' => array( array( 'state' => 'paused', 'awaiting_email_confirmation' => true ), array( 'ready' => false, 'channels' => array(), 'email_pending' => false ), array( 'Verify your email address first.' ), array( 'Alerts are ready' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			'unverified email' => array( array( 'state' => 'paused', 'awaiting_email_confirmation' => true ), array( 'ready' => false, 'channels' => array(), 'email_pending' => false ), array( 'Email Verification Required', 'Monitoring and notifications will start after the account email is verified.' ), array( 'Alerts Are Ready' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		);
 	}
 

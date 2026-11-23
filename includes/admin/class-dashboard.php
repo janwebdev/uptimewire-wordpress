@@ -256,7 +256,7 @@ final class Dashboard {
 	 * @param string $error Status result constant.
 	 * @return string
 	 */
-	private static function failure_text( $error ) {
+	public static function failure_text( $error ) {
 		switch ( $error ) {
 			case Status::UNREACHABLE:
 				return __( 'This WordPress server couldn’t reach UptimeWire.', 'uptimewire' );
@@ -467,7 +467,7 @@ final class Dashboard {
 	 * @param string $headline Status_Data::headline().
 	 * @return array{0: string, 1: string}
 	 */
-	private static function look( $headline ) {
+	public static function look( $headline ) {
 		$looks = array(
 			'unverified' => array( 'info', 'dashicons-email-alt' ),
 			'waiting'    => array( 'info', 'dashicons-clock' ),
@@ -887,8 +887,115 @@ final class Dashboard {
 	 * @return void
 	 */
 	private static function render_alerts( array $data, $headline ) {
-		$alerts   = $data['alerts'];
-		$names    = array(
+		?>
+		<section class="uptimewire-block uptimewire-alerts uptimewire-tone-<?php echo esc_attr( self::alert_availability( $data['alerts'], $headline )[0] ); ?>" aria-labelledby="uptimewire-alerts-title">
+			<h2 id="uptimewire-alerts-title" class="uptimewire-block-title"><?php esc_html_e( 'Alert Readiness', 'uptimewire' ); ?></h2>
+			<?php self::render_alert_readiness( $data, $headline ); ?>
+		</section>
+		<?php
+	}
+
+	/**
+	 * Prints whether monitoring alerts can be sent now, then the channels that
+	 * are configured. The two are different facts: a configured channel carries
+	 * nothing while monitoring is paused or has not started.
+	 *
+	 * Used by the Overview and the Settings screens.
+	 *
+	 * @param array<string, mixed> $data     Kept data.
+	 * @param string               $headline Status_Data::headline().
+	 * @return void
+	 */
+	public static function render_alert_readiness( array $data, $headline ) {
+		$alerts       = $data['alerts'];
+		$availability = self::alert_availability( $alerts, $headline );
+		$settings     = null !== $data['links']['alerts'] ? $data['links']['alerts'] : Overview_Page::DASHBOARD;
+		?>
+		<p class="uptimewire-card-value"><span class="dashicons <?php echo esc_attr( $availability[1] ); ?>" aria-hidden="true"></span> <?php echo esc_html( $availability[2] ); ?></p>
+		<p><?php echo esc_html( $availability[3] ); ?></p>
+		<h3 class="uptimewire-subtitle"><?php esc_html_e( 'Configured Notification Channels', 'uptimewire' ); ?></h3>
+		<?php if ( array() !== $alerts['channels'] || $alerts['other_channels'] ) : ?>
+			<ul class="uptimewire-channels">
+				<?php foreach ( $alerts['channels'] as $channel ) : ?>
+					<li><?php echo esc_html( self::channel_name( $channel ) ); ?></li>
+				<?php endforeach; ?>
+				<?php if ( $alerts['other_channels'] ) : ?>
+					<li><?php esc_html_e( 'Other', 'uptimewire' ); ?></li>
+				<?php endif; ?>
+			</ul>
+			<p class="description"><?php esc_html_e( 'Only the kinds of channels are shown here, never their addresses.', 'uptimewire' ); ?></p>
+		<?php else : ?>
+			<p><?php esc_html_e( 'None', 'uptimewire' ); ?></p>
+		<?php endif; ?>
+		<?php if ( $alerts['email_pending'] ) : ?>
+			<p class="description"><?php esc_html_e( 'A new alert email address is waiting for confirmation. Until it is confirmed, email alerts go to the previous address.', 'uptimewire' ); ?></p>
+		<?php endif; ?>
+		<p>
+			<?php
+			if ( 'ok' === $availability[0] ) {
+				self::external( $settings, __( 'Alert settings in UptimeWire', 'uptimewire' ) );
+			} else {
+				self::link_button( $settings, __( 'Configure Alerts in UptimeWire', 'uptimewire' ), 'warn' === $availability[0] );
+			}
+			?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Whether monitoring alerts can be sent now, from UptimeWire's own answer.
+	 *
+	 * "ready" means UptimeWire checks the website and at least one channel would
+	 * carry an alert now. It says nothing about delivery, so neither do the words.
+	 *
+	 * @param array<string, mixed> $alerts   Kept alerts.
+	 * @param string               $headline Status_Data::headline().
+	 * @return array{0: string, 1: string, 2: string, 3: string} Tone, icon, title, text.
+	 */
+	public static function alert_availability( array $alerts, $headline ) {
+		$configured = array() !== $alerts['channels'] || $alerts['other_channels'];
+
+		if ( 'unverified' === $headline ) {
+			return array( 'info', 'dashicons-email-alt', __( 'Email Verification Required', 'uptimewire' ), __( 'Monitoring and notifications will start after the account email is verified.', 'uptimewire' ) );
+		}
+
+		if ( 'paused' === $headline ) {
+			return array(
+				'off',
+				'dashicons-controls-pause',
+				__( 'Monitoring Is Paused', 'uptimewire' ),
+				$configured
+					? __( 'Your notification channels remain configured, but monitoring alerts are currently inactive.', 'uptimewire' )
+					: __( 'Monitoring alerts are currently inactive, and no notification channel is set up for this website.', 'uptimewire' ),
+			);
+		}
+
+		if ( $alerts['ready'] && 'waiting' === $headline ) {
+			return array( 'info', 'dashicons-clock', __( 'Monitoring Is Starting', 'uptimewire' ), __( 'Notification channels are configured. Monitoring has not completed its first check yet.', 'uptimewire' ) );
+		}
+
+		if ( $alerts['ready'] ) {
+			return array( 'ok', 'dashicons-yes-alt', __( 'Alerts Are Ready', 'uptimewire' ), __( 'Notifications are configured and monitoring is active.', 'uptimewire' ) );
+		}
+
+		return array(
+			'warn',
+			'dashicons-warning',
+			__( 'Alerts Can’t Reach You Right Now', 'uptimewire' ),
+			$configured
+				? __( 'None of the alert channels set up for this website can deliver alerts right now.', 'uptimewire' )
+				: __( 'No alert channel is set up for this website.', 'uptimewire' ),
+		);
+	}
+
+	/**
+	 * Name of an alert channel kind.
+	 *
+	 * @param string $channel Status_Data::CHANNELS value.
+	 * @return string
+	 */
+	public static function channel_name( $channel ) {
+		$names = array(
 			'email'    => __( 'Email', 'uptimewire' ),
 			'telegram' => __( 'Telegram', 'uptimewire' ),
 			'slack'    => __( 'Slack', 'uptimewire' ),
@@ -897,55 +1004,8 @@ final class Dashboard {
 			'webhook'  => __( 'Webhook', 'uptimewire' ),
 			'teams'    => __( 'Microsoft Teams', 'uptimewire' ),
 		);
-		$settings = null !== $data['links']['alerts'] ? $data['links']['alerts'] : Overview_Page::DASHBOARD;
 
-		if ( $alerts['ready'] ) {
-			$tone  = 'ok';
-			$title = __( 'Alerts are ready', 'uptimewire' );
-			$text  = __( 'If your website goes down or a check finds a problem, UptimeWire alerts you by:', 'uptimewire' );
-		} else {
-			$tone  = 'warn';
-			$title = __( 'Alerts can’t reach you right now', 'uptimewire' );
-
-			if ( 'unverified' === $headline ) {
-				$text = __( 'Monitoring hasn’t started, so no alerts are sent. Verify your email address first.', 'uptimewire' );
-			} elseif ( 'paused' === $headline ) {
-				$text = __( 'Monitoring is paused, so no alerts are sent.', 'uptimewire' );
-			} elseif ( array() === $alerts['channels'] && ! $alerts['other_channels'] ) {
-				$text = __( 'No alert channel is set up for this website.', 'uptimewire' );
-			} else {
-				$text = __( 'None of the alert channels set up for this website can deliver alerts right now.', 'uptimewire' );
-			}
-		}
-		?>
-		<section class="uptimewire-block uptimewire-alerts uptimewire-tone-<?php echo esc_attr( $tone ); ?>" aria-labelledby="uptimewire-alerts-title">
-			<h2 id="uptimewire-alerts-title" class="uptimewire-block-title"><?php esc_html_e( 'Alert Readiness', 'uptimewire' ); ?></h2>
-			<p class="uptimewire-card-value"><span class="dashicons <?php echo 'ok' === $tone ? 'dashicons-yes-alt' : 'dashicons-warning'; ?>" aria-hidden="true"></span> <?php echo esc_html( $title ); ?></p>
-			<p><?php echo esc_html( $text ); ?></p>
-			<?php if ( array() !== $alerts['channels'] || $alerts['other_channels'] ) : ?>
-				<ul class="uptimewire-channels" aria-label="<?php esc_attr_e( 'Alert channels', 'uptimewire' ); ?>">
-					<?php foreach ( $alerts['channels'] as $channel ) : ?>
-						<li><?php echo esc_html( $names[ $channel ] ); ?></li>
-					<?php endforeach; ?>
-					<?php if ( $alerts['other_channels'] ) : ?>
-						<li><?php esc_html_e( 'Other', 'uptimewire' ); ?></li>
-					<?php endif; ?>
-				</ul>
-			<?php endif; ?>
-			<?php if ( $alerts['email_pending'] ) : ?>
-				<p class="description"><?php esc_html_e( 'A new alert email address is waiting for confirmation. Until it is confirmed, email alerts go to the previous address.', 'uptimewire' ); ?></p>
-			<?php endif; ?>
-			<p>
-				<?php
-				if ( $alerts['ready'] ) {
-					self::external( $settings, __( 'Alert settings in UptimeWire', 'uptimewire' ) );
-				} else {
-					self::link_button( $settings, __( 'Configure Alerts in UptimeWire', 'uptimewire' ), true );
-				}
-				?>
-			</p>
-		</section>
-		<?php
+		return isset( $names[ $channel ] ) ? $names[ $channel ] : __( 'Other', 'uptimewire' );
 	}
 
 	/**
@@ -954,7 +1014,7 @@ final class Dashboard {
 	 * @param float $percent Percentage.
 	 * @return string
 	 */
-	private static function percent( $percent ) {
+	public static function percent( $percent ) {
 		/* translators: %s: number such as 99.97. */
 		return sprintf( __( '%s%%', 'uptimewire' ), number_format_i18n( $percent, 100.0 === $percent ? 0 : 2 ) );
 	}
@@ -965,7 +1025,7 @@ final class Dashboard {
 	 * @param int $seconds Seconds.
 	 * @return string
 	 */
-	private static function duration( $seconds ) {
+	public static function duration( $seconds ) {
 		if ( $seconds < 60 ) {
 			/* translators: %d: seconds. */
 			return sprintf( _n( '%d second', '%d seconds', $seconds, 'uptimewire' ), $seconds );
@@ -1012,7 +1072,7 @@ final class Dashboard {
 	 * @param int $time Unix time.
 	 * @return string Escaped HTML.
 	 */
-	private static function ago_html( $time ) {
+	public static function ago_html( $time ) {
 		$words = $time > time() - 30
 			? __( 'just now', 'uptimewire' )
 			/* translators: %s: time span such as "3 mins". */
@@ -1032,7 +1092,7 @@ final class Dashboard {
 	 * @param int $time Unix time.
 	 * @return string Escaped HTML.
 	 */
-	private static function time_html( $time ) {
+	public static function time_html( $time ) {
 		return sprintf( '<time datetime="%1$s">%2$s</time>', esc_attr( gmdate( 'c', $time ) ), esc_html( self::date_time( $time ) ) );
 	}
 
@@ -1054,7 +1114,7 @@ final class Dashboard {
 	 * @param string $hidden Words added for screen readers after the text, or ''.
 	 * @return void
 	 */
-	private static function external( $url, $text, $hidden = '' ) {
+	public static function external( $url, $text, $hidden = '' ) {
 		printf(
 			'<a href="%1$s" target="_blank" rel="noopener noreferrer">%2$s<span class="screen-reader-text"> %3$s</span><span aria-hidden="true" class="uptimewire-external">&#8599;</span></a>',
 			esc_url( $url ),
@@ -1071,7 +1131,7 @@ final class Dashboard {
 	 * @param bool   $primary Whether it is the main action.
 	 * @return void
 	 */
-	private static function link_button( $url, $text, $primary ) {
+	public static function link_button( $url, $text, $primary ) {
 		printf(
 			'<a class="button%1$s" href="%2$s" target="_blank" rel="noopener noreferrer">%3$s<span class="screen-reader-text"> %4$s</span><span aria-hidden="true" class="uptimewire-external">&#8599;</span></a>',
 			$primary ? ' button-primary' : '',
