@@ -390,6 +390,20 @@ final class WidgetTest extends Test_Case {
 	}
 
 	/**
+	 * The Network Admin dashboard has the same hook name, but no widget: nothing is loaded there.
+	 *
+	 * @return void
+	 */
+	public function test_no_assets_in_network_admin() {
+		set_current_screen( 'dashboard-network' );
+		Widget::enqueue( 'index.php' );
+		set_current_screen( 'dashboard' );
+
+		$this->assertFalse( wp_style_is( 'uptimewire-widget', 'enqueued' ) );
+		$this->assertFalse( wp_script_is( 'uptimewire-dashboard', 'enqueued' ) );
+	}
+
+	/**
 	 * Rendering never asks UptimeWire, also when the kept status is due.
 	 *
 	 * @return void

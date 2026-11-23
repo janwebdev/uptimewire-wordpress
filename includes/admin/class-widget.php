@@ -66,7 +66,8 @@ final class Widget {
 	 * @return void
 	 */
 	public static function enqueue( $hook_suffix ) {
-		if ( 'index.php' !== $hook_suffix || ! Plugin::current_user_can() ) {
+		// The Network Admin and User dashboards have the same hook name, but not the widget.
+		if ( 'index.php' !== $hook_suffix || is_network_admin() || is_user_admin() || ! Plugin::current_user_can() ) {
 			return;
 		}
 
