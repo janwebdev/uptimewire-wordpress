@@ -179,7 +179,11 @@ final class Overview_Page {
 		<div class="uptimewire-card uptimewire-waiting" id="uptimewire-waiting" data-seconds-left="<?php echo esc_attr( (string) $view['seconds_left'] ); ?>" data-retry-after="<?php echo esc_attr( (string) $view['retry_after'] ); ?>">
 			<p class="uptimewire-state-line"><?php self::state_badge( $state ); ?></p>
 			<h2><?php esc_html_e( 'Finish Connecting UptimeWire', 'uptimewire' ); ?></h2>
-			<p><?php esc_html_e( 'A new tab has opened. Sign in to UptimeWire and approve the connection for your website.', 'uptimewire' ); ?></p>
+			<?php if ( 'tab_blocked' === ( isset( $_GET[ Admin::NOTICE_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ Admin::NOTICE_ARG ] ) ) : '' ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only. ?>
+				<p><?php esc_html_e( 'Open UptimeWire, sign in and approve the connection for your website.', 'uptimewire' ); ?></p>
+			<?php else : ?>
+				<p><?php esc_html_e( 'A new tab has opened. Sign in to UptimeWire and approve the connection for your website.', 'uptimewire' ); ?></p>
+			<?php endif; ?>
 
 			<p class="uptimewire-code-label" id="uptimewire-code-label"><?php esc_html_e( 'Your code', 'uptimewire' ); ?></p>
 			<p class="uptimewire-code" aria-labelledby="uptimewire-code-label"><?php echo esc_html( $pending['user_code'] ); ?></p>

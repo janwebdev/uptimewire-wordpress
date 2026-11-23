@@ -383,6 +383,13 @@ final class ConnectFlowTest extends Test_Case {
 		$this->assertMatchesRegularExpression( '/data-seconds-left="(47\d|480)"/', $html, 'The time left is counted from when UptimeWire answered.' );
 		$this->assertStringContainsString( 'role="status"', $html );
 		$this->assertStringContainsString( 'Authorization Pending', $html );
+
+		// The browser blocked the new tab: the screen does not claim it opened.
+		$_GET['uptimewire_notice'] = 'tab_blocked';
+		$html                      = self::render( array( Overview_Page::class, 'render' ) );
+		unset( $_GET['uptimewire_notice'] );
+		$this->assertStringContainsString( 'Your browser didn’t open the new tab.', $html );
+		$this->assertStringNotContainsString( 'A new tab has opened.', $html );
 	}
 
 	/**
