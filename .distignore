@@ -13,3 +13,4 @@
 /.phpunit.result.cache
 /phpunit-integration.xml.dist
 /README.md
+/.wordpress-org

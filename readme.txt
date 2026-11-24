@@ -8,7 +8,7 @@ Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Know when your WordPress website goes down. UptimeWire checks uptime, SSL, domain and DNS from outside your server and shows the results in WordPress.
+Know when your WordPress site goes down. UptimeWire checks uptime, SSL, domain and DNS from outside and shows the results in your dashboard.
 
 == Description ==
 
