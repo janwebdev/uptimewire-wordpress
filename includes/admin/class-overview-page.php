@@ -477,7 +477,7 @@ final class Overview_Page {
 			<p><?php esc_html_e( 'Remove the copied connection from this installation to set up monitoring for this website. Only this WordPress site forgets it: the original website stays connected, and UptimeWire keeps monitoring it.', 'uptimewire' ); ?></p>
 			<?php self::render_remove_local_form( __( 'Remove Connection From This Copy', 'uptimewire' ) ); ?>
 			<h3><?php esc_html_e( 'Did This Site Move Here?', 'uptimewire' ); ?></h3>
-			<p><?php esc_html_e( 'A site that moved to a new address looks the same to WordPress. Remove the connection here too, then connect again from the Overview screen. Connecting again replaces the old connection in UptimeWire, so do it only if the old site no longer uses it.', 'uptimewire' ); ?></p>
+			<p><?php esc_html_e( 'A site that moved to a new address looks the same to WordPress. Use the button above to remove the connection here too, then connect again from the Overview screen. Connecting again replaces the old connection in UptimeWire, so do it only if the old site no longer uses it.', 'uptimewire' ); ?></p>
 			<p><?php esc_html_e( 'If UptimeWire still monitors the old address, change the website address in UptimeWire first, or choose to monitor this address as a new website while connecting.', 'uptimewire' ); ?></p>
 		</div>
 		<?php
