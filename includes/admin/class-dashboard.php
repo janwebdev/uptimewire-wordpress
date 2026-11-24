@@ -397,6 +397,8 @@ final class Dashboard {
 			}
 		}
 
+		$found = array_merge( $found, self::attention_be5( $data ) );
+
 		if ( array() === $found ) {
 			return;
 		}
@@ -410,6 +412,27 @@ final class Dashboard {
 			)
 		);
 		echo '</p>';
+	}
+
+	/**
+	 * The checks of BE-5 that need attention, in words: a broken email domain, a late or failed job.
+	 * Advice alone and "no email on this domain" need none.
+	 *
+	 * @param array<string, mixed> $data Kept data.
+	 * @return string[]
+	 */
+	public static function attention_be5( array $data ) {
+		$found = array();
+
+		if ( isset( $data['mail']['state'] ) && 'problem' === $data['mail']['state'] ) {
+			$found[] = __( 'email domain', 'uptimewire' );
+		}
+
+		if ( isset( $data['scheduled_job']['state'] ) && in_array( $data['scheduled_job']['state'], array( 'late', 'failed' ), true ) ) {
+			$found[] = __( 'scheduled job', 'uptimewire' );
+		}
+
+		return $found;
 	}
 
 	/**
@@ -541,6 +564,14 @@ final class Dashboard {
 				self::expiry_card( __( 'SSL Certificate', 'uptimewire' ), 'dashicons-lock', $data['ssl'], false, $detail );
 				self::expiry_card( __( 'Domain Expiration', 'uptimewire' ), 'dashicons-admin-site-alt3', $data['domain'], true, $detail );
 				self::dns_card( $data['dns'], $detail );
+
+				// A server before BE-5 sends neither check: then there is no card at all.
+				if ( isset( $data['mail'] ) ) {
+					self::mail_card( $data['mail'], $detail );
+				}
+				if ( isset( $data['scheduled_job'] ) ) {
+					self::job_card( $data['scheduled_job'], isset( $data['links']['scheduled_job'] ) ? $data['links']['scheduled_job'] : $detail );
+				}
 				?>
 			</ul>
 		</section>
@@ -661,6 +692,141 @@ final class Dashboard {
 	}
 
 	/**
+	 * Prints the email domain card.
+	 *
+	 * @param array<string, mixed> $mail   Kept check.
+	 * @param string|null          $detail Link to details.
+	 * @return void
+	 */
+	private static function mail_card( array $mail, $detail ) {
+		$lines = array();
+
+		switch ( $mail['state'] ) {
+			case 'ok':
+				$tone  = 'ok';
+				$value = __( 'Set up', 'uptimewire' );
+				break;
+			case 'problem':
+				$tone  = 'warn';
+				$value = __( 'Needs attention', 'uptimewire' );
+				break;
+			case 'none':
+				// Calm: many website domains never receive email.
+				$tone    = 'off';
+				$value   = __( 'No email', 'uptimewire' );
+				$lines[] = __( 'This domain does not receive email.', 'uptimewire' );
+				break;
+			default:
+				$tone  = 'unknown';
+				$value = __( 'Unknown', 'uptimewire' );
+		}
+
+		if ( 'none' !== $mail['state'] ) {
+			foreach ( $mail['items'] as $key => $item ) {
+				$lines[] = self::mail_line( $key, $item );
+			}
+		}
+
+		if ( array() === $lines ) {
+			$lines[] = __( 'No result to show yet.', 'uptimewire' );
+		}
+
+		self::card( __( 'Email Domain', 'uptimewire' ), 'dashicons-email', $tone, $value, $lines, $mail['checked_at'], $detail );
+	}
+
+	/**
+	 * One line of the email domain check in words, such as "Sender list (SPF): valid".
+	 *
+	 * @param string               $key  mx, spf, dmarc or dkim.
+	 * @param array<string, mixed> $item Kept line: state and reason.
+	 * @return string
+	 */
+	public static function mail_line( $key, array $item ) {
+		$names   = array(
+			'mx'    => __( 'Mail servers (MX)', 'uptimewire' ),
+			'spf'   => __( 'Sender list (SPF)', 'uptimewire' ),
+			'dmarc' => __( 'Spoofing protection (DMARC)', 'uptimewire' ),
+			'dkim'  => __( 'Email signature (DKIM)', 'uptimewire' ),
+		);
+		$reasons = array(
+			'mx.ok'               => __( 'found', 'uptimewire' ),
+			'mx.none'             => __( 'none, the domain does not receive email', 'uptimewire' ),
+			'mx.missing'          => __( 'missing — email to this domain can’t be delivered', 'uptimewire' ),
+			'spf.ok'              => __( 'valid', 'uptimewire' ),
+			'spf.none'            => __( 'none', 'uptimewire' ),
+			'spf.missing'         => __( 'missing — emails from your domain may be marked as spam', 'uptimewire' ),
+			'spf.multiple'        => __( 'more than one record — receivers may reject your emails', 'uptimewire' ),
+			'spf.invalid'         => __( 'has an error — receivers may reject your emails', 'uptimewire' ),
+			'spf.invalid_include' => __( 'has an error — receivers may reject your emails', 'uptimewire' ),
+			'spf.too_many'        => __( 'too many lookups — receivers may ignore it', 'uptimewire' ),
+			'dmarc.reject'        => __( 'on', 'uptimewire' ),
+			'dmarc.quarantine'    => __( 'on', 'uptimewire' ),
+			'dmarc.ok'            => __( 'on', 'uptimewire' ),
+			'dmarc.none'          => __( 'only watching — tip: a stricter policy protects better', 'uptimewire' ),
+			'dmarc.missing'       => __( 'not set up — tip: add it to protect your domain from fake emails', 'uptimewire' ),
+			'dmarc.multiple'      => __( 'more than one record — tip: keep only one', 'uptimewire' ),
+			'dkim.found'          => __( 'found', 'uptimewire' ),
+			// Looked for under the names of the big mail services only: not found is never "broken".
+			'dkim.not_found'      => __( 'could not be checked', 'uptimewire' ),
+			'unanswered'          => __( 'could not be checked', 'uptimewire' ),
+		);
+		$states  = array(
+			'ok'      => __( 'OK', 'uptimewire' ),
+			'problem' => __( 'needs attention', 'uptimewire' ),
+			'advice'  => __( 'see the tip in UptimeWire', 'uptimewire' ),
+			'none'    => __( 'none', 'uptimewire' ),
+		);
+		$words   = null !== $item['reason'] && isset( $reasons[ $item['reason'] ] )
+			? $reasons[ $item['reason'] ]
+			: ( isset( $states[ $item['state'] ] ) ? $states[ $item['state'] ] : __( 'could not be checked', 'uptimewire' ) );
+
+		/* translators: 1: part of the email setup, such as "Sender list (SPF)"; 2: its state in words, such as "valid". */
+		return sprintf( __( '%1$s: %2$s', 'uptimewire' ), isset( $names[ $key ] ) ? $names[ $key ] : $key, $words );
+	}
+
+	/**
+	 * Prints the scheduled job card.
+	 *
+	 * @param array<string, mixed> $job    Kept check.
+	 * @param string|null          $detail Link to the place in UptimeWire where the job is connected.
+	 * @return void
+	 */
+	private static function job_card( array $job, $detail ) {
+		$lines = array();
+		$looks = array(
+			'on_time'       => array( 'ok', __( 'On time', 'uptimewire' ) ),
+			'late'          => array( 'warn', __( 'Late', 'uptimewire' ) ),
+			'failed'        => array( 'bad', __( 'Failed', 'uptimewire' ) ),
+			'not_connected' => array( 'off', __( 'Not connected', 'uptimewire' ) ),
+		);
+		$look  = isset( $looks[ $job['state'] ] ) ? $looks[ $job['state'] ] : array( 'unknown', __( 'Unknown', 'uptimewire' ) );
+
+		if ( 'late' === $job['state'] ) {
+			$lines[] = __( 'The job didn’t call UptimeWire in time.', 'uptimewire' );
+		} elseif ( 'failed' === $job['state'] ) {
+			$lines[] = __( 'The job reported that its last run failed.', 'uptimewire' );
+		}
+
+		if ( 'not_connected' === $job['state'] ) {
+			$lines[] = __( 'Connect a scheduled job of this website, such as a backup, in UptimeWire. You’ll be alerted when it stops running.', 'uptimewire' );
+		} elseif ( isset( $looks[ $job['state'] ] ) ) {
+			$lines[] = null !== $job['last_call_at']
+				/* translators: %s: time span such as "2 hours". */
+				? sprintf( __( 'Last call %s ago', 'uptimewire' ), human_time_diff( $job['last_call_at'], time() ) )
+				: __( 'No call yet', 'uptimewire' );
+
+			if ( null !== $job['interval_seconds'] && null !== $job['grace_seconds'] ) {
+				/* translators: 1: time between runs, such as "1 day"; 2: allowed delay, such as "1 hour". */
+				$lines[] = sprintf( __( 'Expected every %1$s, up to %2$s late', 'uptimewire' ), self::duration( $job['interval_seconds'] ), self::duration( $job['grace_seconds'] ) );
+			}
+		} else {
+			$lines[] = __( 'No result to show yet.', 'uptimewire' );
+		}
+
+		self::card( __( 'Scheduled Job', 'uptimewire' ), 'dashicons-clock', $look[0], $look[1], $lines, null, $detail, 'not_connected' === $job['state'] ? __( 'Connect in UptimeWire', 'uptimewire' ) : null );
+	}
+
+	/**
 	 * Prints one card.
 	 *
 	 * @param string                      $name    Title.
@@ -670,9 +836,10 @@ final class Dashboard {
 	 * @param array<int, string|string[]> $lines   Plain lines, or array( 'untrusted' => text ) for text from UptimeWire.
 	 * @param int|null                    $checked Last check time.
 	 * @param string|null                 $detail  Link to details in UptimeWire.
+	 * @param string|null                 $action  Text of that link when it is an action, instead of "Details".
 	 * @return void
 	 */
-	private static function card( $name, $icon, $tone, $value, array $lines, $checked, $detail ) {
+	private static function card( $name, $icon, $tone, $value, array $lines, $checked, $detail, $action = null ) {
 		$marks = array(
 			'ok'      => 'dashicons-yes-alt',
 			'warn'    => 'dashicons-warning',
@@ -704,7 +871,7 @@ final class Dashboard {
 				<p class="uptimewire-card-link">
 					<?php
 					/* translators: %s: card title, such as "SSL Certificate". Read by screen readers only, after "Details". */
-					self::external( $detail, __( 'Details', 'uptimewire' ), sprintf( __( 'about %s', 'uptimewire' ), $name ) );
+					self::external( $detail, null !== $action ? $action : __( 'Details', 'uptimewire' ), sprintf( __( 'about %s', 'uptimewire' ), $name ) );
 					?>
 				</p>
 			<?php endif; ?>
@@ -839,13 +1006,17 @@ final class Dashboard {
 	 */
 	private static function event_label( array $event ) {
 		$labels = array(
-			'downtime:ongoing'  => array( __( 'Website is down', 'uptimewire' ), 'bad', 'dashicons-dismiss' ),
-			'downtime:resolved' => array( __( 'Website was down', 'uptimewire' ), 'off', 'dashicons-backup' ),
-			'ssl:problem'       => array( __( 'SSL certificate warning', 'uptimewire' ), 'warn', 'dashicons-lock' ),
-			'ssl:renewed'       => array( __( 'SSL certificate renewed', 'uptimewire' ), 'ok', 'dashicons-lock' ),
-			'domain:problem'    => array( __( 'Domain expiration warning', 'uptimewire' ), 'warn', 'dashicons-admin-site-alt3' ),
-			'domain:renewed'    => array( __( 'Domain renewed', 'uptimewire' ), 'ok', 'dashicons-admin-site-alt3' ),
-			'dns:changed'       => array( __( 'DNS records changed', 'uptimewire' ), 'warn', 'dashicons-networking' ),
+			'downtime:ongoing'        => array( __( 'Website is down', 'uptimewire' ), 'bad', 'dashicons-dismiss' ),
+			'downtime:resolved'       => array( __( 'Website was down', 'uptimewire' ), 'off', 'dashicons-backup' ),
+			'ssl:problem'             => array( __( 'SSL certificate warning', 'uptimewire' ), 'warn', 'dashicons-lock' ),
+			'ssl:renewed'             => array( __( 'SSL certificate renewed', 'uptimewire' ), 'ok', 'dashicons-lock' ),
+			'domain:problem'          => array( __( 'Domain expiration warning', 'uptimewire' ), 'warn', 'dashicons-admin-site-alt3' ),
+			'domain:renewed'          => array( __( 'Domain renewed', 'uptimewire' ), 'ok', 'dashicons-admin-site-alt3' ),
+			'dns:changed'             => array( __( 'DNS records changed', 'uptimewire' ), 'warn', 'dashicons-networking' ),
+			'mail:problem'            => array( __( 'Email domain problem', 'uptimewire' ), 'warn', 'dashicons-email' ),
+			'scheduled_job:missed'    => array( __( 'Scheduled job missed', 'uptimewire' ), 'warn', 'dashicons-clock' ),
+			'scheduled_job:failed'    => array( __( 'Scheduled job failed', 'uptimewire' ), 'bad', 'dashicons-clock' ),
+			'scheduled_job:recovered' => array( __( 'Scheduled job back on time', 'uptimewire' ), 'ok', 'dashicons-clock' ),
 		);
 		$key    = $event['type'] . ':' . $event['kind'];
 

@@ -4,7 +4,7 @@ Tags: uptime, monitoring, ssl, downtime, status
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.5.0
+Stable tag: 0.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,6 +16,7 @@ UptimeWire checks your website from its own servers on the internet. Because the
 
 * Get notified when your website goes down.
 * Get warned before your SSL certificate or domain expires.
+* See whether the email setup of your domain (MX, SPF, DMARC, DKIM) works, and whether your scheduled jobs, such as backups, run on time.
 * Free monitoring for one website. No credit card required.
 
 Connect your WordPress site to an UptimeWire account: click "Start Free Monitoring" or "Connect Existing Account", approve the connection in UptimeWire, and the plugin finishes connecting by itself. Then UptimeWire › Overview shows whether your website is online, its SSL certificate, domain and DNS checks, uptime for the last 24 hours, 7 days and 30 days, recent events, and whether alerts can reach you.
@@ -78,6 +79,11 @@ The plugin records the WordPress Site Address on which the connection was made. 
 
 == Changelog ==
 
+= 0.6.0 =
+* Two new checks of UptimeWire, on every plan: "Email Domain" (mail servers, SPF, DMARC, DKIM in plain words; a domain without email is shown calmly) and "Scheduled Job" (on time, late, failed, or how to connect one in UptimeWire). Cards on Overview, a line in the Dashboard widget when something needs doing, Site Health recommendations, rows in Settings and their events.
+* The plugin never receives the records of your domain or the secret address of your scheduled job.
+* Works with an UptimeWire server that does not send the new checks yet: then nothing new is shown.
+
 = 0.5.0 =
 * Disconnect in Settings, with a confirmation: ends the connection in UptimeWire and forgets it locally, and says honestly when UptimeWire couldn't confirm.
 * Copied and moved sites are recognised by the WordPress address: they show no data, never use or end the original's connection, and can remove the copied connection locally.
@@ -103,6 +109,9 @@ The plugin records the WordPress Site Address on which the connection was made. 
 * Plugin foundation: admin menu, welcome screen with environment checks, website address, Help tabs, clean uninstall.
 
 == Upgrade Notice ==
+
+= 0.6.0 =
+Email setup of your domain and scheduled jobs, inside WordPress.
 
 = 0.5.0 =
 Disconnect, copied sites and separate viewing and managing permissions. If you used the `uptimewire_capability` filter to let other roles use the plugin, they can now only view; see the FAQ.

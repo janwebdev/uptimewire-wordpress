@@ -258,6 +258,14 @@ final class Settings_Page {
 			__( 'Domain expiration', 'uptimewire' ) => self::check_words( $data['domain']['state'] ),
 			__( 'DNS monitoring', 'uptimewire' )    => self::check_words( $data['dns']['state'] ),
 		);
+
+		// On every plan, so never "not in your plan". A server before BE-5 sends neither.
+		if ( isset( $data['mail'] ) ) {
+			$checks[ __( 'Email domain', 'uptimewire' ) ] = self::check_words( 'unknown' === $data['mail']['state'] ? 'unknown' : 'ok' );
+		}
+		if ( isset( $data['scheduled_job'] ) ) {
+			$checks[ __( 'Scheduled job', 'uptimewire' ) ] = 'not_connected' === $data['scheduled_job']['state'] ? __( 'Included, not connected', 'uptimewire' ) : __( 'Included', 'uptimewire' );
+		}
 		?>
 		<table class="form-table uptimewire-summary" role="presentation">
 			<tbody>

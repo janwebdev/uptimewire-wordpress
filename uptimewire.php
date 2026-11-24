@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       UptimeWire – Website Uptime & SSL Monitoring
  * Plugin URI:        https://uptimewire.com/
- * Description:       Monitor your WordPress website from outside: uptime, SSL certificate, domain and DNS checks by UptimeWire.
- * Version:           0.5.0
+ * Description:       Monitor your WordPress website from outside: uptime, SSL certificate, domain and DNS checks, the email setup of your domain and your scheduled jobs by UptimeWire.
+ * Version:           0.6.0
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            UptimeWire
@@ -18,7 +18,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'UPTIMEWIRE_VERSION', '0.5.0' );
+define( 'UPTIMEWIRE_VERSION', '0.6.0' );
 define( 'UPTIMEWIRE_FILE', __FILE__ );
 define( 'UPTIMEWIRE_DIR', plugin_dir_path( __FILE__ ) );
 

@@ -43,12 +43,29 @@ final class Status_Data {
 		'30d' => 2592000,
 	);
 
+	/** States of the email domain check as a whole. */
+	const MAIL_STATES = array( 'ok', 'problem', 'none', 'unknown' );
+
+	/** The lines of the email domain check, in the order shown. */
+	const MAIL_KEYS = array( 'mx', 'spf', 'dmarc', 'dkim' );
+
+	/** States of one line of the email domain check. */
+	const MAIL_ITEM_STATES = array( 'ok', 'problem', 'advice', 'none', 'unknown' );
+
+	/** Reasons of the lines the plugin has its own words for. */
+	const MAIL_REASONS = array( 'mx.ok', 'mx.none', 'mx.missing', 'spf.ok', 'spf.none', 'spf.missing', 'spf.multiple', 'spf.invalid', 'spf.invalid_include', 'spf.too_many', 'dmarc.reject', 'dmarc.quarantine', 'dmarc.ok', 'dmarc.none', 'dmarc.missing', 'dmarc.multiple', 'dkim.found', 'dkim.not_found', 'unanswered' );
+
+	/** States of the scheduled job check. */
+	const JOB_STATES = array( 'not_connected', 'on_time', 'late', 'failed' );
+
 	/** Event types and the kinds each may have. */
 	const EVENT_KINDS = array(
-		'downtime' => array( 'ongoing', 'resolved' ),
-		'ssl'      => array( 'problem', 'renewed' ),
-		'domain'   => array( 'problem', 'renewed' ),
-		'dns'      => array( 'changed' ),
+		'downtime'      => array( 'ongoing', 'resolved' ),
+		'ssl'           => array( 'problem', 'renewed' ),
+		'domain'        => array( 'problem', 'renewed' ),
+		'dns'           => array( 'changed' ),
+		'mail'          => array( 'problem' ),
+		'scheduled_job' => array( 'missed', 'failed', 'recovered' ),
 	);
 
 	/** Alert channel kinds of the contract. */
@@ -92,6 +109,9 @@ final class Status_Data {
 			'ssl'           => self::slow_check( self::arr( $checks, 'ssl' ), false ),
 			'domain'        => self::slow_check( self::arr( $checks, 'domain' ), true ),
 			'dns'           => self::dns( self::arr( $checks, 'dns' ) ),
+			// A server before BE-5 sends neither: then there is nothing to show (null), not an unknown state.
+			'mail'          => isset( $checks['mail'] ) && is_array( $checks['mail'] ) ? self::mail( $checks['mail'] ) : null,
+			'scheduled_job' => isset( $checks['scheduled_job'] ) && is_array( $checks['scheduled_job'] ) ? self::job( $checks['scheduled_job'] ) : null,
 			'events'        => self::events( isset( $data['events'] ) ? $data['events'] : null ),
 			'alerts'        => self::alerts( self::arr( $data, 'alerts' ) ),
 			'links'         => self::links( self::arr( $data, 'links' ) ),
@@ -274,6 +294,62 @@ final class Status_Data {
 	}
 
 	/**
+	 * The email domain check: its state and the known lines, by key, in the order of MAIL_KEYS.
+	 *
+	 * Only the state and the reason of a line are kept, never a record of the
+	 * domain. A reason the plugin has no words for is null: the line is then
+	 * shown by its state.
+	 *
+	 * @param array<string, mixed> $check Raw check.
+	 * @return array<string, mixed>
+	 */
+	private static function mail( array $check ) {
+		$found = array();
+
+		if ( isset( $check['items'] ) && is_array( $check['items'] ) ) {
+			foreach ( $check['items'] as $item ) {
+				if ( ! is_array( $item ) || ! isset( $item['key'] ) || ! is_string( $item['key'] ) || ! in_array( $item['key'], self::MAIL_KEYS, true ) || isset( $found[ $item['key'] ] ) ) {
+					continue;
+				}
+
+				$found[ $item['key'] ] = array(
+					'state'  => isset( $item['state'] ) && is_string( $item['state'] ) && in_array( $item['state'], self::MAIL_ITEM_STATES, true ) ? $item['state'] : self::UNKNOWN,
+					'reason' => isset( $item['reason'] ) && is_string( $item['reason'] ) && in_array( $item['reason'], self::MAIL_REASONS, true ) ? $item['reason'] : null,
+				);
+			}
+		}
+
+		$items = array();
+
+		foreach ( self::MAIL_KEYS as $key ) {
+			if ( isset( $found[ $key ] ) ) {
+				$items[ $key ] = $found[ $key ];
+			}
+		}
+
+		return array(
+			'state'      => isset( $check['state'] ) && is_string( $check['state'] ) && in_array( $check['state'], self::MAIL_STATES, true ) ? $check['state'] : self::UNKNOWN,
+			'items'      => $items,
+			'checked_at' => self::time( isset( $check['checked_at'] ) ? $check['checked_at'] : null ),
+		);
+	}
+
+	/**
+	 * The scheduled job check. Its secret address is never part of the answer, and nothing else is kept either.
+	 *
+	 * @param array<string, mixed> $check Raw check.
+	 * @return array<string, mixed>
+	 */
+	private static function job( array $check ) {
+		return array(
+			'state'            => isset( $check['state'] ) && is_string( $check['state'] ) && in_array( $check['state'], self::JOB_STATES, true ) ? $check['state'] : self::UNKNOWN,
+			'last_call_at'     => self::time( isset( $check['last_call_at'] ) ? $check['last_call_at'] : null ),
+			'interval_seconds' => self::int( $check, 'interval_seconds', 60, 31536000 ),
+			'grace_seconds'    => self::int( $check, 'grace_seconds', 60, 31536000 ),
+		);
+	}
+
+	/**
 	 * The latest events, newest first, at most MAX_EVENTS.
 	 *
 	 * An event whose type or kind the plugin does not know is kept as type
@@ -358,7 +434,7 @@ final class Status_Data {
 	private static function links( array $links ) {
 		$result = array();
 
-		foreach ( array( 'site', 'alerts', 'plans' ) as $name ) {
+		foreach ( array( 'site', 'alerts', 'plans', 'scheduled_job' ) as $name ) {
 			$result[ $name ] = isset( $links[ $name ] ) && self::is_safe_link( $links[ $name ] ) ? $links[ $name ] : null;
 		}
 

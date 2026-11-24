@@ -76,6 +76,16 @@ final class Site_Health {
 				if ( null !== self::access_result() ) {
 					$add['access'] = __( 'UptimeWire can reach the website', 'uptimewire' );
 				}
+				// Only from current data: an out-of-date status passes nothing. No email on the domain, a job not
+				// connected and advice are not results: they are in Info.
+				if ( ! Status::is_stale( Status::get() ) ) {
+					if ( isset( $data['mail']['state'] ) && in_array( $data['mail']['state'], array( 'ok', 'problem' ), true ) ) {
+						$add['mail'] = __( 'Email domain (UptimeWire)', 'uptimewire' );
+					}
+					if ( isset( $data['scheduled_job']['state'] ) && in_array( $data['scheduled_job']['state'], array( 'on_time', 'late', 'failed' ), true ) ) {
+						$add['scheduled_job'] = __( 'Scheduled job (UptimeWire)', 'uptimewire' );
+					}
+				}
 			}
 		} elseif ( in_array( $state, array( State::RECONNECTION_REQUIRED, State::CONNECTION_ERROR, State::SITE_COPY ), true ) && null === \UptimeWire\Authorization::outcome() ) {
 			// A connection that stopped working. An attempt in progress or just failed is not reported.
@@ -316,6 +326,65 @@ final class Site_Health {
 	}
 
 	/**
+	 * Does the email setup of the domain work? A problem is a recommendation, never critical: only downtime is.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function test_mail() {
+		$data = Status::data();
+		$mail = null !== $data && isset( $data['mail'] ) ? $data['mail'] : array(
+			'state'      => 'unknown',
+			'items'      => array(),
+			'checked_at' => null,
+		);
+
+		if ( 'problem' !== $mail['state'] ) {
+			return self::result( 'mail', 'good', __( 'Your domain’s email setup works', 'uptimewire' ), array( self::as_of( $mail ) ) );
+		}
+
+		$lines = array();
+
+		foreach ( $mail['items'] as $key => $item ) {
+			if ( 'problem' === $item['state'] ) {
+				$lines[] = Dashboard::mail_line( $key, $item );
+			}
+		}
+
+		$lines[] = __( 'Emails from your website may not arrive, or may land in spam. Fix the records with your domain or email provider.', 'uptimewire' );
+		$lines[] = self::as_of( $mail );
+
+		return self::result( 'mail', 'recommended', __( 'Your domain’s email setup has a problem', 'uptimewire' ), $lines, self::details( $data ) );
+	}
+
+	/**
+	 * Does the scheduled job run on time? Late or failed is a recommendation, never critical.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function test_scheduled_job() {
+		$data = Status::data();
+		$job  = null !== $data && isset( $data['scheduled_job'] ) ? $data['scheduled_job'] : array(
+			'state'        => 'unknown',
+			'last_call_at' => null,
+		);
+		$last = null !== $job['last_call_at']
+			/* translators: %s: date and time of the last call. */
+			? sprintf( __( 'Last call on %s.', 'uptimewire' ), self::date_time( $job['last_call_at'] ) )
+			: '';
+		$open  = null !== $data && isset( $data['links']['scheduled_job'] ) ? $data['links']['scheduled_job'] : ( null !== $data ? $data['links']['site'] : null );
+		$where = null !== $open ? self::link( $open, __( 'Open the job in UptimeWire', 'uptimewire' ), true ) : '';
+
+		switch ( $job['state'] ) {
+			case 'late':
+				return self::result( 'scheduled_job', 'recommended', __( 'Your scheduled job is late', 'uptimewire' ), array( __( 'It didn’t call UptimeWire in time. Check that it still runs.', 'uptimewire' ), $last ), $where );
+			case 'failed':
+				return self::result( 'scheduled_job', 'recommended', __( 'Your scheduled job reported a failure', 'uptimewire' ), array( __( 'Its last run failed. Check the job’s own log.', 'uptimewire' ), $last ), $where );
+			default:
+				return self::result( 'scheduled_job', 'good', __( 'Your scheduled job runs on time', 'uptimewire' ), array( $last ) );
+		}
+	}
+
+	/**
 	 * Did UptimeWire confirm the last disconnect?
 	 *
 	 * @return array<string, mixed>
@@ -474,6 +543,40 @@ final class Site_Health {
 					? __( 'Unavailable — the registry does not provide a reliable expiration date', 'uptimewire' )
 					: self::expiry_line( $data['domain'] ),
 			);
+
+			// Everything of the two checks of BE-5, tips included: the tests above report only what needs doing.
+			if ( isset( $data['mail'] ) ) {
+				$lines = array();
+				$debug = array( $data['mail']['state'] );
+
+				foreach ( $data['mail']['items'] as $key => $item ) {
+					$lines[] = Dashboard::mail_line( $key, $item );
+					$debug[] = $key . '=' . $item['state'];
+				}
+
+				$fields['mail'] = array(
+					'label' => __( 'Email domain', 'uptimewire' ),
+					'value' => 'none' === $data['mail']['state'] ? __( 'This domain does not receive email.', 'uptimewire' ) : ( array() !== $lines ? implode( '; ', $lines ) : __( 'Not checked yet', 'uptimewire' ) ),
+					'debug' => implode( '; ', $debug ),
+				);
+			}
+
+			if ( isset( $data['scheduled_job'] ) ) {
+				$job   = $data['scheduled_job'];
+				$words = array(
+					'not_connected' => __( 'Not connected', 'uptimewire' ),
+					'on_time'       => __( 'On time', 'uptimewire' ),
+					'late'          => __( 'Late', 'uptimewire' ),
+					'failed'        => __( 'Failed', 'uptimewire' ),
+				);
+
+				$fields['scheduled_job'] = array(
+					'label' => __( 'Scheduled job', 'uptimewire' ),
+					/* translators: 1: state, such as "On time"; 2: date and time of the last call, or "never"; 3: time between runs, such as "1 day", or "?". */
+					'value' => sprintf( __( '%1$s; last call: %2$s; expected every %3$s', 'uptimewire' ), isset( $words[ $job['state'] ] ) ? $words[ $job['state'] ] : __( 'Unknown', 'uptimewire' ), null !== $job['last_call_at'] ? self::date_time( $job['last_call_at'] ) : __( 'never', 'uptimewire' ), null !== $job['interval_seconds'] ? Dashboard::duration( $job['interval_seconds'] ) : '?' ),
+					'debug' => sprintf( '%s; last_call=%s; interval=%s; grace=%s', $job['state'], null !== $job['last_call_at'] ? gmdate( 'c', $job['last_call_at'] ) : 'never', null !== $job['interval_seconds'] ? (string) $job['interval_seconds'] : '?', null !== $job['grace_seconds'] ? (string) $job['grace_seconds'] : '?' ),
+				);
+			}
 		}
 
 		$info[ self::SECTION ] = array(

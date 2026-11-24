@@ -413,4 +413,129 @@ final class StatusDataTest extends TestCase {
 		$this->assertNull( Status_Data::account_label( 'owner@example.com' ) );
 		$this->assertNull( Status_Data::account_label( 1000 ) );
 	}
+
+	/**
+	 * The two checks of BE-5, as the contract writes them.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function be5_checks() {
+		return array(
+			'mail'          => array(
+				'state'      => 'problem',
+				'items'      => array(
+					array( 'key' => 'mx', 'state' => 'ok', 'reason' => 'mx.ok' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+					array( 'key' => 'spf', 'state' => 'problem', 'reason' => 'spf.too_many' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+					array( 'key' => 'dmarc', 'state' => 'advice', 'reason' => 'dmarc.missing' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+					array( 'key' => 'dkim', 'state' => 'unknown', 'reason' => 'dkim.not_found' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+				),
+				'checked_at' => '2026-11-23T12:00:00+00:00',
+			),
+			'scheduled_job' => array(
+				'state'            => 'late',
+				'last_call_at'     => '2026-11-22T10:00:00+00:00',
+				'interval_seconds' => 86400,
+				'grace_seconds'    => 3600,
+			),
+		);
+	}
+
+	/**
+	 * The email domain and the scheduled job are read as they are.
+	 *
+	 * @return void
+	 */
+	public function test_mail_and_scheduled_job() {
+		$body                                   = self::answer();
+		$body['data']['checks']                += self::be5_checks();
+		$body['data']['links']['scheduled_job'] = 'https://app.uptimewire.com/monitors/0193/view#scheduled-job';
+
+		$data = Status_Data::normalize( $body );
+
+		$this->assertSame( 'problem', $data['mail']['state'] );
+		$this->assertSame( array( 'mx', 'spf', 'dmarc', 'dkim' ), array_keys( $data['mail']['items'] ) );
+		$this->assertSame( array( 'state' => 'problem', 'reason' => 'spf.too_many' ), $data['mail']['items']['spf'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->assertSame( strtotime( '2026-11-23T12:00:00+00:00' ), $data['mail']['checked_at'] );
+		$this->assertSame( 'late', $data['scheduled_job']['state'] );
+		$this->assertSame( strtotime( '2026-11-22T10:00:00+00:00' ), $data['scheduled_job']['last_call_at'] );
+		$this->assertSame( 86400, $data['scheduled_job']['interval_seconds'] );
+		$this->assertSame( 3600, $data['scheduled_job']['grace_seconds'] );
+		$this->assertSame( 'https://app.uptimewire.com/monitors/0193/view#scheduled-job', $data['links']['scheduled_job'] );
+	}
+
+	/**
+	 * A server without BE-5 sends neither block: there is nothing to show, not "unknown".
+	 *
+	 * @return void
+	 */
+	public function test_server_without_be5() {
+		$data = Status_Data::normalize( self::answer() );
+
+		$this->assertNull( $data['mail'] );
+		$this->assertNull( $data['scheduled_job'] );
+		$this->assertNull( $data['links']['scheduled_job'] );
+	}
+
+	/**
+	 * Unknown or hostile values of the new blocks never become healthy, and nothing but the known words is kept.
+	 *
+	 * @return void
+	 */
+	public function test_mail_and_scheduled_job_unknown_values() {
+		$body                                    = self::answer();
+		$body['data']['checks']['mail']          = array(
+			'state'      => 'great',
+			'items'      => array(
+				array( 'key' => 'spf', 'state' => 'perfect', 'reason' => '<b>v=spf1 include:evil</b>', 'record' => 'v=spf1 secret' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+				array( 'key' => 'spf', 'state' => 'ok', 'reason' => 'spf.ok' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+				array( 'key' => 'bimi', 'state' => 'ok', 'reason' => 'bimi.ok' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+				array( 'key' => 'mx', 'state' => 'ok' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+				'garbage',
+			),
+			'checked_at' => 'yesterday',
+		);
+		$body['data']['checks']['scheduled_job'] = array(
+			'state'            => 'sleeping',
+			'last_call_at'     => 12,
+			'interval_seconds' => -5,
+			'grace_seconds'    => '3600',
+			'address'          => 'https://api.uptimewire.com/hb/secret',
+		);
+
+		$data = Status_Data::normalize( $body );
+
+		$this->assertSame( 'unknown', $data['mail']['state'] );
+		$this->assertSame( array( 'mx', 'spf' ), array_keys( $data['mail']['items'] ), 'mx, spf, dmarc, dkim only, once each, in this order' );
+		$this->assertSame( array( 'state' => 'unknown', 'reason' => null ), $data['mail']['items']['spf'], 'The first line of a key counts; an unknown reason is not shown' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->assertSame( array( 'state' => 'ok', 'reason' => null ), $data['mail']['items']['mx'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->assertNull( $data['mail']['checked_at'] );
+		$this->assertSame( 'unknown', $data['scheduled_job']['state'] );
+		$this->assertNull( $data['scheduled_job']['last_call_at'] );
+		$this->assertNull( $data['scheduled_job']['interval_seconds'] );
+		$this->assertNull( $data['scheduled_job']['grace_seconds'] );
+		$this->assertStringNotContainsString( 'secret', (string) json_encode( $data ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
+		$this->assertStringNotContainsString( 'evil', (string) json_encode( $data ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
+	}
+
+	/**
+	 * The events of BE-5 are known; a kind that belongs to another type is not.
+	 *
+	 * @return void
+	 */
+	public function test_be5_events() {
+		$body                   = self::answer();
+		$body['data']['events'] = array(
+			array( 'type' => 'scheduled_job', 'kind' => 'failed', 'at' => '2026-11-23T10:00:00+00:00', 'ended_at' => null, 'duration_seconds' => 50, 'expires_at' => '2026-12-01T00:00:00+00:00' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			array( 'type' => 'scheduled_job', 'kind' => 'recovered', 'at' => '2026-11-23T09:00:00+00:00' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			array( 'type' => 'scheduled_job', 'kind' => 'missed', 'at' => '2026-11-23T08:00:00+00:00' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			array( 'type' => 'mail', 'kind' => 'problem', 'at' => '2026-11-23T07:00:00+00:00' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			array( 'type' => 'mail', 'kind' => 'renewed', 'at' => '2026-11-23T06:00:00+00:00' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		);
+
+		$events = Status_Data::normalize( $body )['events'];
+
+		$this->assertSame( array( 'scheduled_job:failed', 'scheduled_job:recovered', 'scheduled_job:missed', 'mail:problem', 'unknown:unknown' ), array_map( static function ( $e ) { return $e['type'] . ':' . $e['kind']; }, $events ) ); // phpcs:ignore
+		$this->assertNull( $events[0]['duration_seconds'], 'A job is never downtime.' );
+		$this->assertNull( $events[0]['expires_at'] );
+	}
 }

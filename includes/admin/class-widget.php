@@ -356,6 +356,9 @@ final class Widget {
 			$attention[] = __( 'DNS', 'uptimewire' );
 		}
 
+		// The same one line, only when there is something to do: a broken email domain, a late or failed job.
+		$attention = array_merge( $attention, Dashboard::attention_be5( $data ) );
+
 		if ( array() !== $attention ) {
 			$facts[] = array( __( 'Needs attention', 'uptimewire' ), '<span class="uptimewire-widget-flag uptimewire-tone-warn"><span class="dashicons dashicons-warning" aria-hidden="true"></span> ' . esc_html( implode( wp_get_list_item_separator(), $attention ) ) . '</span>' );
 		}
