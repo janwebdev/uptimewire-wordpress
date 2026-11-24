@@ -241,7 +241,7 @@ final class LifecycleTest extends Test_Case {
 
 		$_GET[ Admin::NOTICE_ARG ] = 'disconnect_unsure';
 		$html                      = self::render( array( Overview_Page::class, 'render' ) );
-		$this->assertStringContainsString( 'couldn’t be reached to confirm the end of the connection', $html );
+		$this->assertStringContainsString( 'couldn’t be reached to end the connection there', $html );
 		$this->assertStringContainsString( 'UptimeWire didn’t confirm the disconnect', $html );
 		$this->assertStringContainsString( 'remove the WordPress connection of https://www.customer-site.com in UptimeWire account ACC-00001000, under My Profile › WordPress', $html );
 		$this->assertStringContainsString( Overview_Page::CONNECTIONS, $html );

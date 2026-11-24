@@ -678,3 +678,8 @@
 	align-items: center;
 	margin: 8px 0;
 }
+
+.uptimewire-settings .uptimewire-summary td > .description {
+	display: block;
+	margin-top: 4px;
+}

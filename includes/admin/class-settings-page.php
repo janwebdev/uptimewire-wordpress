@@ -189,6 +189,22 @@ final class Settings_Page {
 			<hr class="wp-header-end">
 			<div class="uptimewire-card uptimewire-confirm" role="group" aria-labelledby="uptimewire-confirm-title">
 				<h2 id="uptimewire-confirm-title"><?php esc_html_e( 'Disconnect UptimeWire?', 'uptimewire' ); ?></h2>
+				<?php
+				$about = Connection::get();
+				$site  = null !== $about && isset( $about['site_url'] ) && is_string( $about['site_url'] ) ? $about['site_url'] : Plugin::site_url();
+				$label = Connection::account_label();
+				?>
+				<p class="description">
+					<?php
+					echo esc_html(
+						'' !== $label
+							/* translators: 1: website address; 2: UptimeWire account number. */
+							? sprintf( __( 'Website: %1$s · UptimeWire account %2$s', 'uptimewire' ), $site, $label )
+							/* translators: %s: website address. */
+							: sprintf( __( 'Website: %s', 'uptimewire' ), $site )
+					);
+					?>
+				</p>
 				<p><?php esc_html_e( 'This WordPress website will stop displaying monitoring results.', 'uptimewire' ); ?></p>
 				<p><?php esc_html_e( 'UptimeWire will continue monitoring your website and sending configured alerts.', 'uptimewire' ); ?></p>
 				<p><?php esc_html_e( 'Your UptimeWire account, monitoring history, and website settings will remain unchanged.', 'uptimewire' ); ?></p>
@@ -340,7 +356,7 @@ final class Settings_Page {
 		<ul class="uptimewire-troubleshooting">
 			<li>
 				<strong><?php esc_html_e( 'Connection:', 'uptimewire' ); ?></strong>
-				<?php esc_html_e( 'If the connection ended or stopped working, reconnect from the Overview screen. Monitoring in UptimeWire keeps running meanwhile.', 'uptimewire' ); ?>
+				<?php esc_html_e( 'If the connection ended or stopped working, an administrator can reconnect it from the Overview screen. Monitoring in UptimeWire keeps running meanwhile.', 'uptimewire' ); ?>
 				<a href="<?php echo esc_url( Plugin::overview_url() ); ?>"><?php esc_html_e( 'Overview', 'uptimewire' ); ?></a>
 			</li>
 			<li>
