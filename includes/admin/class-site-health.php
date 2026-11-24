@@ -338,8 +338,13 @@ final class Site_Health {
 			'checked_at' => null,
 		);
 
-		if ( 'problem' !== $mail['state'] ) {
+		if ( 'ok' === $mail['state'] ) {
 			return self::result( 'mail', 'good', __( 'Your domain’s email setup works', 'uptimewire' ), array( self::as_of( $mail ) ) );
+		}
+
+		// Passed only on UptimeWire's word: anything it did not call fine is not a pass.
+		if ( 'problem' !== $mail['state'] ) {
+			return self::result( 'mail', 'recommended', __( 'UptimeWire has no current result for your domain’s email setup', 'uptimewire' ), array( __( 'Open the UptimeWire screen to get the latest results.', 'uptimewire' ) ), self::details( $data ) );
 		}
 
 		$lines = array();
@@ -379,8 +384,11 @@ final class Site_Health {
 				return self::result( 'scheduled_job', 'recommended', __( 'Your scheduled job is late', 'uptimewire' ), array( __( 'It didn’t call UptimeWire in time. Check that it still runs.', 'uptimewire' ), $last ), $where );
 			case 'failed':
 				return self::result( 'scheduled_job', 'recommended', __( 'Your scheduled job reported a failure', 'uptimewire' ), array( __( 'Its last run failed. Check the job’s own log.', 'uptimewire' ), $last ), $where );
-			default:
+			case 'on_time':
 				return self::result( 'scheduled_job', 'good', __( 'Your scheduled job runs on time', 'uptimewire' ), array( $last ) );
+			default:
+				// Not connected or a state this plugin doesn't know: never a pass.
+				return self::result( 'scheduled_job', 'recommended', __( 'UptimeWire has no current result for your scheduled job', 'uptimewire' ), array( __( 'Open the UptimeWire screen to get the latest results.', 'uptimewire' ) ), $where );
 		}
 	}
 

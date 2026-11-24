@@ -419,6 +419,34 @@ final class MailCronTest extends Test_Case {
 	}
 
 	/**
+	 * The Site Health results pass only what UptimeWire said is fine, however they are called.
+	 *
+	 * @return void
+	 */
+	public function test_site_health_results_never_pass_the_unknown() {
+		foreach ( array( 'unknown', 'none', 'great' ) as $state ) {
+			self::read(
+				self::answer(
+					array(
+						'state' => $state,
+						'items' => array(),
+					)
+				)
+			);
+			$this->assertNotSame( 'good', Site_Health::test_mail()['status'], $state );
+		}
+
+		foreach ( array( 'not_connected', 'sleeping' ) as $state ) {
+			self::read( self::answer( array(), array( 'state' => $state ) ) );
+			$this->assertNotSame( 'good', Site_Health::test_scheduled_job()['status'], $state );
+		}
+
+		Status::forget();
+		$this->assertNotSame( 'good', Site_Health::test_mail()['status'], 'No data' );
+		$this->assertNotSame( 'good', Site_Health::test_scheduled_job()['status'], 'No data' );
+	}
+
+	/**
 	 * Settings lists both checks.
 	 *
 	 * @return void
