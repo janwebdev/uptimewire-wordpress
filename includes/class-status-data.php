@@ -64,7 +64,7 @@ final class Status_Data {
 		'ssl'           => array( 'problem', 'renewed' ),
 		'domain'        => array( 'problem', 'renewed' ),
 		'dns'           => array( 'changed' ),
-		'mail'          => array( 'problem' ),
+		'mail'          => array( 'problem', 'fixed' ),
 		'scheduled_job' => array( 'missed', 'failed', 'recovered' ),
 	);
 

@@ -1014,6 +1014,7 @@ final class Dashboard {
 			'domain:renewed'          => array( __( 'Domain renewed', 'uptimewire' ), 'ok', 'dashicons-admin-site-alt3' ),
 			'dns:changed'             => array( __( 'DNS records changed', 'uptimewire' ), 'warn', 'dashicons-networking' ),
 			'mail:problem'            => array( __( 'Email domain problem', 'uptimewire' ), 'warn', 'dashicons-email' ),
+			'mail:fixed'              => array( __( 'Email domain fine again', 'uptimewire' ), 'ok', 'dashicons-email' ),
 			'scheduled_job:missed'    => array( __( 'Scheduled job missed', 'uptimewire' ), 'warn', 'dashicons-clock' ),
 			'scheduled_job:failed'    => array( __( 'Scheduled job failed', 'uptimewire' ), 'bad', 'dashicons-clock' ),
 			'scheduled_job:recovered' => array( __( 'Scheduled job back on time', 'uptimewire' ), 'ok', 'dashicons-clock' ),

@@ -324,6 +324,7 @@ final class MailCronTest extends Test_Case {
 			array( 'type' => 'scheduled_job', 'kind' => 'recovered', 'at' => gmdate( 'Y-m-d\TH:i:s+00:00', time() - 7200 ), 'ended_at' => null, 'duration_seconds' => null, 'expires_at' => null ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			array( 'type' => 'scheduled_job', 'kind' => 'missed', 'at' => gmdate( 'Y-m-d\TH:i:s+00:00', time() - 9000 ), 'ended_at' => null, 'duration_seconds' => null, 'expires_at' => null ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			array( 'type' => 'mail', 'kind' => 'problem', 'at' => gmdate( 'Y-m-d\TH:i:s+00:00', time() - 86400 ), 'ended_at' => null, 'duration_seconds' => null, 'expires_at' => null ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			array( 'type' => 'mail', 'kind' => 'fixed', 'at' => gmdate( 'Y-m-d\TH:i:s+00:00', time() - 43200 ), 'ended_at' => null, 'duration_seconds' => null, 'expires_at' => null ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		);
 		self::read( $answer );
 		$html = self::overview();
@@ -332,6 +333,7 @@ final class MailCronTest extends Test_Case {
 		$this->assertStringContainsString( 'Scheduled job back on time', $html );
 		$this->assertStringContainsString( 'Scheduled job missed', $html );
 		$this->assertStringContainsString( 'Email domain problem', $html );
+		$this->assertStringContainsString( 'Email domain fine again', $html );
 		$this->assertStringNotContainsString( 'Other event (see UptimeWire)', $html );
 		$this->assertStringNotContainsString( 'Lasted', $html );
 	}

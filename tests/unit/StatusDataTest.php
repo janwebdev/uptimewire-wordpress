@@ -529,12 +529,13 @@ final class StatusDataTest extends TestCase {
 			array( 'type' => 'scheduled_job', 'kind' => 'recovered', 'at' => '2026-11-23T09:00:00+00:00' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			array( 'type' => 'scheduled_job', 'kind' => 'missed', 'at' => '2026-11-23T08:00:00+00:00' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			array( 'type' => 'mail', 'kind' => 'problem', 'at' => '2026-11-23T07:00:00+00:00' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			array( 'type' => 'mail', 'kind' => 'fixed', 'at' => '2026-11-23T06:30:00+00:00' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			array( 'type' => 'mail', 'kind' => 'renewed', 'at' => '2026-11-23T06:00:00+00:00' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		);
 
 		$events = Status_Data::normalize( $body )['events'];
 
-		$this->assertSame( array( 'scheduled_job:failed', 'scheduled_job:recovered', 'scheduled_job:missed', 'mail:problem', 'unknown:unknown' ), array_map( static function ( $e ) { return $e['type'] . ':' . $e['kind']; }, $events ) ); // phpcs:ignore
+		$this->assertSame( array( 'scheduled_job:failed', 'scheduled_job:recovered', 'scheduled_job:missed', 'mail:problem', 'mail:fixed', 'unknown:unknown' ), array_map( static function ( $e ) { return $e['type'] . ':' . $e['kind']; }, $events ) ); // phpcs:ignore
 		$this->assertNull( $events[0]['duration_seconds'], 'A job is never downtime.' );
 		$this->assertNull( $events[0]['expires_at'] );
 	}
