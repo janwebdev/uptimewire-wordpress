@@ -254,8 +254,8 @@ final class Settings_Page {
 		$headline = Status_Data::headline( $site );
 		$checks   = array(
 			__( 'Uptime', 'uptimewire' )            => __( 'Included', 'uptimewire' ),
-			__( 'SSL certificate', 'uptimewire' )   => self::check_words( $data['ssl']['state'] ),
-			__( 'Domain expiration', 'uptimewire' ) => self::check_words( $data['domain']['state'] ),
+			__( 'SSL certificate', 'uptimewire' )   => self::check_words( $data['ssl']['state'], $data['ssl']['error'] ),
+			__( 'Domain expiration', 'uptimewire' ) => self::check_words( $data['domain']['state'], $data['domain']['error'] ),
 			__( 'DNS monitoring', 'uptimewire' )    => self::check_words( $data['dns']['state'] ),
 		);
 
@@ -318,17 +318,18 @@ final class Settings_Page {
 	/**
 	 * Whether a check is part of the monitoring, in words.
 	 *
-	 * @param string $state Check state.
+	 * @param string      $state Check state.
+	 * @param string|null $error Why UptimeWire has no result, when it looked.
 	 * @return string
 	 */
-	private static function check_words( $state ) {
+	private static function check_words( $state, $error = null ) {
 		switch ( $state ) {
 			case 'not_on_plan':
 				return __( 'Not in your plan', 'uptimewire' );
 			case 'not_applicable':
 				return __( 'Not applicable: the website uses http://', 'uptimewire' );
 			case 'unknown':
-				return __( 'Included, not checked yet', 'uptimewire' );
+				return null === $error ? __( 'Included, not checked yet', 'uptimewire' ) : __( 'Included, no result: see Overview', 'uptimewire' );
 			default:
 				return __( 'Included', 'uptimewire' );
 		}

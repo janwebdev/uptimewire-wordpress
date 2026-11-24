@@ -93,6 +93,13 @@ final class SettingsTest extends Test_Case {
 		$this->assertStringContainsString( '<strong>SSL certificate:</strong> Not applicable: the website uses http://', $html );
 		$this->assertStringContainsString( '<strong>Domain expiration:</strong> Not in your plan', $html );
 		$this->assertStringContainsString( '<strong>DNS monitoring:</strong> Included, not checked yet', $html );
+
+		// UptimeWire looked and could not get a result (seen live: the registry answered 404): not "not checked yet".
+		\UptimeWire\Status::forget();
+		$answer                             = self::status_answer();
+		$answer['data']['checks']['domain'] = array( 'state' => 'unknown', 'checked_at' => null, 'expires_at' => null, 'days_left' => null, 'expiry_known' => false, 'warning' => null, 'error' => 'the registry answered 404' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::read_status( $answer );
+		$this->assertStringContainsString( '<strong>Domain expiration:</strong> Included, no result: see Overview', self::screen() );
 	}
 
 	/**
