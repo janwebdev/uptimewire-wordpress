@@ -704,7 +704,7 @@ final class Dashboard {
 		switch ( $mail['state'] ) {
 			case 'ok':
 				$tone  = 'ok';
-				$value = __( 'Set up', 'uptimewire' );
+				$value = __( 'Working', 'uptimewire' );
 				break;
 			case 'problem':
 				$tone  = 'warn';
@@ -808,7 +808,7 @@ final class Dashboard {
 		}
 
 		if ( 'not_connected' === $job['state'] ) {
-			$lines[] = __( 'Connect a scheduled job of this website, such as a backup, in UptimeWire. You’ll be alerted when it stops running.', 'uptimewire' );
+			$lines[] = __( 'Connect a scheduled job, such as a backup, in UptimeWire. You’ll be alerted when it stops running.', 'uptimewire' );
 		} elseif ( isset( $looks[ $job['state'] ] ) ) {
 			$lines[] = null !== $job['last_call_at']
 				/* translators: %s: time span such as "2 hours". */

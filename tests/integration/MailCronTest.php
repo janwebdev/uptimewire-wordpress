@@ -230,7 +230,7 @@ final class MailCronTest extends Test_Case {
 		$html = self::overview();
 		$card = self::card( $html, 'Email Domain' );
 		$this->assertStringContainsString( 'uptimewire-tone-ok', $card );
-		$this->assertStringContainsString( 'Set up', $card );
+		$this->assertStringContainsString( 'Working', $card );
 		$this->assertStringContainsString( 'tip:', $card, 'Advice is shown on the card, without alarm' );
 		$this->assertStringNotContainsString( 'Needs attention: email domain', $html );
 
