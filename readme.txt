@@ -1,5 +1,5 @@
 === UptimeWire – Website Uptime & SSL Monitoring ===
-Contributors: uptimewire
+Contributors: janwebdev
 Tags: uptime, monitoring, ssl, downtime, status
 Requires at least: 6.5
 Tested up to: 7.1
