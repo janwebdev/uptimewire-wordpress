@@ -347,7 +347,7 @@ final class Settings_Page {
 		}
 		?>
 		<h2><?php esc_html_e( 'Alerts', 'uptimewire' ); ?></h2>
-		<div class="uptimewire-settings-alerts">
+		<div class="uptimewire-settings-alerts uptimewire-tone-<?php echo esc_attr( Dashboard::alert_availability( $data['alerts'], Status_Data::headline( $data['site'] ), $stale )[0] ); ?>">
 			<?php Dashboard::render_alert_readiness( $data, Status_Data::headline( $data['site'] ), $stale ); ?>
 		</div>
 		<?php

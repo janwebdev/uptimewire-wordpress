@@ -53,6 +53,7 @@ final class SettingsTest extends Test_Case {
 			'<strong>DNS monitoring:</strong> Included',
 			'Change monitoring settings in UptimeWire',
 			'<h2>Alerts</h2>',
+			'<div class="uptimewire-settings-alerts uptimewire-tone-ok">',
 			'Alerts Are Ready',
 			'Notifications are configured and monitoring is active.',
 			'Configured Notification Channels',

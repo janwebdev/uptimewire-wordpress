@@ -612,9 +612,10 @@ final class DashboardTest extends Test_Case {
 		$this->assertCount( 1, Fake_Api::calls( '/wp/v1/status' ) );
 		$this->assertSame( 300, Status::ttl( Status::data() ) );
 
-		self::age_status( 299 );
+		// A few seconds short of the period, not one: the clock may tick between two lines (failed once in 100 runs).
+		self::age_status( 295 );
 		$this->assertFalse( Status::is_due( Status::get() ) );
-		self::age_status( 1 );
+		self::age_status( 5 );
 		$this->assertTrue( Status::is_due( Status::get() ) );
 
 		\UptimeWire\Lock::acquire( 'status', 15 );

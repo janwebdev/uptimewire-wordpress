@@ -137,6 +137,10 @@
 	gap: 4px;
 }
 
+.uptimewire-state[class*="uptimewire-tone-"] .dashicons {
+	color: var(--uptimewire-tone, #50575e);
+}
+
 .uptimewire-state-off .dashicons {
 	color: #646970;
 }
@@ -235,12 +239,16 @@
 
 /* Monitoring dashboard (WP-3). Words carry every state; color only repeats them. */
 
-.uptimewire-dashboard {
+.uptimewire-dashboard,
+.uptimewire-settings {
 	--uptimewire-ok: #007017;
 	--uptimewire-warn: #8a5a00;
 	--uptimewire-bad: #b32d2e;
 	--uptimewire-info: #135e96;
 	--uptimewire-off: #50575e;
+}
+
+.uptimewire-dashboard {
 	max-width: 1200px;
 }
 
