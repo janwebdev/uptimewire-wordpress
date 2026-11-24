@@ -618,9 +618,12 @@ final class Dashboard {
 				$lines[] = __( 'Your UptimeWire plan doesn’t include this check.', 'uptimewire' );
 				break;
 			default:
-				$tone    = 'unknown';
-				$value   = __( 'Unknown', 'uptimewire' );
-				$lines[] = __( 'No result to show yet.', 'uptimewire' );
+				$tone  = 'unknown';
+				$value = __( 'Unknown', 'uptimewire' );
+				if ( null === $check['error'] ) {
+					// With an error, UptimeWire did look: the error below says why there is no result.
+					$lines[] = __( 'No result to show yet.', 'uptimewire' );
+				}
 		}
 
 		if ( in_array( $check['state'], array( 'ok', 'problem' ), true ) ) {

@@ -262,6 +262,7 @@ final class DashboardTest extends Test_Case {
 			'ssl not on plan'    => array( 'ssl', array( 'state' => 'not_on_plan', 'checked_at' => null, 'expires_at' => null, 'days_left' => null, 'warning' => null, 'error' => null ), array( 'Not in your plan' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			'domain known'       => array( 'domain', array( 'state' => 'ok', 'checked_at' => null, 'expires_at' => $soon, 'days_left' => 5, 'expiry_known' => true, 'warning' => null, 'error' => null ), array( 'Registered', 'Expires in 5 days' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			'domain unknown'     => array( 'domain', array( 'state' => 'ok', 'checked_at' => null, 'expires_at' => null, 'days_left' => null, 'expiry_known' => false, 'warning' => null, 'error' => null ), array( 'uptimewire-tone-info', 'Expiry date unknown', 'see when this domain expires' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			'domain lookup 404'  => array( 'domain', array( 'state' => 'unknown', 'checked_at' => null, 'expires_at' => null, 'days_left' => null, 'expiry_known' => false, 'warning' => null, 'error' => 'the registry answered 404' ), array( 'Unknown', 'the registry answered 404' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			'domain not checked' => array( 'domain', array( 'state' => 'unknown', 'checked_at' => null, 'expires_at' => null, 'days_left' => null, 'expiry_known' => false, 'warning' => null, 'error' => null ), array( 'Unknown', 'No result to show yet.' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		);
 	}
@@ -283,6 +284,10 @@ final class DashboardTest extends Test_Case {
 
 		foreach ( $words as $word ) {
 			$this->assertStringContainsString( $word, $html );
+		}
+
+		if ( 'unknown' === $value['state'] && null !== $value['error'] ) {
+			$this->assertStringNotContainsString( 'No result to show yet.', $html, 'UptimeWire did look: the error says why, not "yet"' );
 		}
 
 		if ( 'domain' === $check && 'ok' === $value['state'] && ! $value['expiry_known'] ) {
