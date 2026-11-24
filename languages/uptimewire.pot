@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-24T15:18:51+00:00\n"
+"POT-Creation-Date: 2026-11-24T17:13:20+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: uptimewire\n"
@@ -20,9 +20,8 @@ msgid "UptimeWire – Website Uptime & SSL Monitoring"
 msgstr ""
 
 #. Plugin URI of the plugin
-#. Author URI of the plugin
 #: uptimewire.php
-msgid "https://uptimewire.com/"
+msgid "https://uptimewire.com/solutions/wordpress/"
 msgstr ""
 
 #. Description of the plugin
@@ -38,6 +37,11 @@ msgstr ""
 #: includes/admin/class-site-health.php:604
 #: includes/admin/class-site-health.php:667
 msgid "UptimeWire"
+msgstr ""
+
+#. Author URI of the plugin
+#: uptimewire.php
+msgid "https://uptimewire.com/"
 msgstr ""
 
 #: includes/admin/class-admin.php:126

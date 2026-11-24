@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       UptimeWire – Website Uptime & SSL Monitoring
- * Plugin URI:        https://uptimewire.com/
+ * Plugin URI:        https://uptimewire.com/solutions/wordpress/
  * Description:       Website monitoring by UptimeWire, inside WordPress: uptime, SSL, domain, DNS, email domain and scheduled jobs.
  * Version:           1.0.0
  * Requires at least: 6.5
