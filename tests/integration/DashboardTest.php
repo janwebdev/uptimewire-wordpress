@@ -584,19 +584,19 @@ final class DashboardTest extends Test_Case {
 	}
 
 	/**
-	 * Allowed differences of the address still match; www. and other paths do not.
+	 * Allowed differences of the address still match, "www." included; subdomains and other paths do not.
 	 *
 	 * @return void
 	 */
 	public function test_equivalent_addresses() {
-		foreach ( array( 'http://www.customer-site.com/', 'https://WWW.Customer-Site.com', 'https://www.customer-site.com:443', 'https://www.customer-site.com./' ) as $url ) {
+		foreach ( array( 'http://www.customer-site.com/', 'https://WWW.Customer-Site.com', 'https://www.customer-site.com:443', 'https://www.customer-site.com./', 'https://customer-site.com' ) as $url ) {
 			delete_option( Status::OPTION );
 			self::connect_site();
 			Fake_Api::queue( '/wp/v1/status', 200, self::status_answer( array( 'url' => $url ) ) );
 			$this->assertSame( Status::UPDATED, Status::refresh( true ), $url );
 		}
 
-		foreach ( array( 'https://customer-site.com', 'https://www.customer-site.com/shop', 'https://www.customer-site.com.evil.example' ) as $url ) {
+		foreach ( array( 'https://shop.customer-site.com', 'https://www.customer-site.com/shop', 'https://www.customer-site.com.evil.example' ) as $url ) {
 			delete_option( Status::OPTION );
 			self::connect_site();
 			Fake_Api::queue( '/wp/v1/status', 200, self::status_answer( array( 'url' => $url ) ) );

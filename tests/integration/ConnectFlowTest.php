@@ -607,7 +607,7 @@ final class ConnectFlowTest extends Test_Case {
 	 * @return void
 	 */
 	public function test_18b_equivalent_addresses() {
-		$same = array( 'http://www.customer-site.com', 'https://WWW.Customer-Site.com/', 'https://www.customer-site.com:443/', 'http://localhost:' . wp_parse_url( home_url(), PHP_URL_PORT ) . '/' );
+		$same = array( 'http://www.customer-site.com', 'https://WWW.Customer-Site.com/', 'https://www.customer-site.com:443/', 'http://localhost:' . wp_parse_url( home_url(), PHP_URL_PORT ) . '/', 'https://customer-site.com', 'http://Customer-Site.com/' );
 		foreach ( $same as $site ) {
 			self::wipe();
 			update_option( 'uptimewire_site_url', self::SITE, false );
@@ -618,7 +618,7 @@ final class ConnectFlowTest extends Test_Case {
 			$this->assertSame( State::CONNECTION_ESTABLISHED, State::current(), $site );
 		}
 
-		$other = array( 'https://customer-site.com', 'https://www.customer-site.com/shop', 'https://www.customer-site.com.evil.example', 'https://www.customer-site.com:8443/', 'https://www.customer-site.com/?x=1' );
+		$other = array( 'https://shop.customer-site.com', 'https://www.www.customer-site.com', 'https://www.customer-site.com/shop', 'https://www.customer-site.com.evil.example', 'https://www.customer-site.com:8443/', 'https://www.customer-site.com/?x=1' );
 		foreach ( $other as $site ) {
 			self::wipe();
 			update_option( 'uptimewire_site_url', self::SITE, false );
@@ -628,6 +628,27 @@ final class ConnectFlowTest extends Test_Case {
 			self::make_due();
 			Authorization::poll();
 			$this->assertSame( State::CONNECTION_ERROR, State::current(), $site );
+		}
+	}
+
+	/**
+	 * Scenario 18d: the website is set without "www." and UptimeWire answers with it: the same website.
+	 *
+	 * @return void
+	 */
+	public function test_18d_www_added_by_uptimewire() {
+		foreach ( array(
+			'https://www.customer-site.com/'      => State::CONNECTION_ESTABLISHED,
+			'https://www.shop.customer-site.com/' => State::CONNECTION_ERROR,
+		) as $site => $state ) {
+			self::wipe();
+			update_option( 'uptimewire_site_url', 'https://customer-site.com/', false );
+			$this->start_connecting();
+			Fake_Api::queue( '/wp/v1/token', 200, self::token_answer( $site ) );
+			Fake_Api::queue( '/wp/v1/revoke', 200 );
+			self::make_due();
+			Authorization::poll();
+			$this->assertSame( $state, State::current(), $site );
 		}
 	}
 

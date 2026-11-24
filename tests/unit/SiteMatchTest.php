@@ -31,6 +31,12 @@ final class SiteMatchTest extends TestCase {
 			'default http port'  => array( 'http://example.com:80/blog', 'https://example.com/blog/' ),
 			'folder'             => array( 'https://example.com/blog/', 'https://example.com/blog' ),
 			'custom port'        => array( 'https://example.com:8443/', 'https://example.com:8443' ),
+			'www'                => array( 'https://www.example.com/', 'https://example.com/' ),
+			'www case'           => array( 'https://WWW.Example.com', 'https://example.com/' ),
+			'www folder'         => array( 'http://www.example.com/blog/', 'https://example.com/blog' ),
+			'www trailing dot'   => array( 'https://www.example.com./', 'https://example.com' ),
+			'www port'           => array( 'https://www.example.com:8443/', 'https://example.com:8443' ),
+			'www of a subdomain' => array( 'https://www.shop.example.com/', 'https://shop.example.com/' ),
 		);
 	}
 
@@ -41,7 +47,12 @@ final class SiteMatchTest extends TestCase {
 	 */
 	public function different() {
 		return array(
-			'www'              => array( 'https://www.example.com/', 'https://example.com/' ),
+			'www vs subdomain' => array( 'https://www.example.com/', 'https://shop.example.com/' ),
+			'www.subdomain'    => array( 'https://www.shop.example.com/', 'https://example.com/' ),
+			'two www'          => array( 'https://www.www.example.com/', 'https://example.com/' ),
+			'www without dot'  => array( 'https://wwwexample.com/', 'https://example.com/' ),
+			'www2'             => array( 'https://www2.example.com/', 'https://example.com/' ),
+			'www other folder' => array( 'https://www.example.com/shop', 'https://example.com/' ),
 			'other domain'     => array( 'https://example.org/', 'https://example.com/' ),
 			'suffix attack'    => array( 'https://example.com.evil.test/', 'https://example.com/' ),
 			'prefix attack'    => array( 'https://evilexample.com/', 'https://example.com/' ),
@@ -81,6 +92,18 @@ final class SiteMatchTest extends TestCase {
 	 */
 	public function test_different_website( $a, $b ) {
 		$this->assertFalse( Site_Match::matches_any( $a, array( $b ) ) );
+		$this->assertFalse( Site_Match::matches_any( $b, array( $a ) ) );
+	}
+
+	/**
+	 * One leading "www." is not part of the key, so the fingerprint of the address does not change with it.
+	 *
+	 * @return void
+	 */
+	public function test_www_key() {
+		$this->assertSame( 'example.com/blog', Site_Match::key( 'https://WWW.example.com/blog/' ) );
+		$this->assertSame( 'www.example.com', Site_Match::key( 'https://www.www.example.com/' ) );
+		$this->assertSame( 'www', Site_Match::key( 'https://www./' ) );
 	}
 
 	/**
