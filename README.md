@@ -2,7 +2,7 @@
 
 The WordPress plugin of [UptimeWire](https://uptimewire.com), a website monitoring service that checks uptime, SSL certificates, domain expiry and DNS from outside your server.
 
-> **Status: in development. Not released.** The plugin connects a site to an UptimeWire account (RFC 8628 device authorization) and shows its monitoring status on the Overview screen, the Dashboard widget, Site Health and Settings (0.4.0). Do not use it on a live site yet. The plugin is not in the WordPress.org directory.
+> **Status: release candidate 1.0.0, not yet in the WordPress.org directory.** The plugin connects a site to an UptimeWire account (RFC 8628 device authorization) and shows its monitoring status on the Overview screen, the Dashboard widget, Site Health and Settings: uptime, SSL certificate, domain expiration, DNS, email domain and scheduled job.
 
 ## What it does
 
@@ -26,10 +26,10 @@ composer install
 vendor/bin/phpunit           # unit tests
 vendor/bin/phpunit -c phpunit-integration.xml.dist   # integration tests, inside a stand container (see the file)
 vendor/bin/phpcs             # WordPress coding standards and PHP 7.4 compatibility
-bin/build.sh                 # the installable zip, without development files (.distignore)
+bin/build.sh                 # build/uptimewire-<version>.zip, without development files (.distignore); reproducible
 ```
 
-`docker/` holds a throwaway test stand (WordPress with PHP 7.4, 8.3 and 8.5, MariaDB) and the scripted checks: `docker/smoke.sh` (foundation), `docker/smoke-wp2.sh` (connecting, against a fake API), `docker/smoke-wp3.sh` (the dashboard, against a fake API), `docker/smoke-wp4.sh` (the Dashboard widget, Site Health and Settings, against a fake API), `docker/live.sh` (against a local copy of UptimeWire), `docker/multisite-uninstall.sh`, `docker/multisite-connect.sh`. The passwords in it are for that local stand only.
+`docker/` holds a throwaway test stand (WordPress with PHP 7.4, 8.3 and 8.5, MariaDB) and the scripted checks: `docker/smoke.sh` (foundation), `docker/smoke-wp2.sh` (connecting, against a fake API), `docker/smoke-wp3.sh` (the dashboard, against a fake API), `docker/smoke-wp4.sh` (the Dashboard widget, Site Health and Settings, against a fake API), `docker/smoke-wp5.sh` (disconnect, copies, uninstall), `docker/multisite-wp4.sh`, `docker/multisite-be5.sh`, `docker/multisite-wp5.sh`, `docker/live.sh` (against a local copy of UptimeWire), `docker/multisite-uninstall.sh`, `docker/multisite-connect.sh`. The passwords in it are for that local stand only.
 
 ## External services
 
