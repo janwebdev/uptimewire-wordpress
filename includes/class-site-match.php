@@ -15,8 +15,9 @@ defined( 'ABSPATH' ) || exit;
  * Compares the website UptimeWire reports with the address of this WordPress.
  *
  * Allowed differences: the scheme (http or https), a trailing slash, the case of
- * the host name, a trailing dot and the default port of the scheme. Everything
- * else is a different website, "www." included, as in UptimeWire itself.
+ * the host name, a trailing dot, the default port of the scheme and one leading
+ * "www." of the host name. Everything else is a different website, other
+ * subdomains included, as in UptimeWire itself.
  */
 final class Site_Match {
 
@@ -44,6 +45,11 @@ final class Site_Match {
 		if ( 1 === preg_match( '/[\x80-\xff]/', $host ) && function_exists( 'idn_to_ascii' ) ) {
 			$ascii = idn_to_ascii( $host, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46 );
 			$host  = is_string( $ascii ) ? strtolower( $ascii ) : $host;
+		}
+
+		// www.example.com and example.com are one website, as in UptimeWire; only one leading "www." is dropped.
+		if ( 0 === strpos( $host, 'www.' ) && strlen( $host ) > 4 ) {
+			$host = substr( $host, 4 );
 		}
 
 		$port = isset( $parts['port'] ) ? (int) $parts['port'] : 0;

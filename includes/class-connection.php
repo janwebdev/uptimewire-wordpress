@@ -199,8 +199,8 @@ final class Connection {
 	 * The WordPress Site Address at the time of connecting is the identity of
 	 * the installation: a copy keeps the database, and so the "Website to
 	 * monitor" option, but not the address. Differences that mean the same
-	 * address (http or https, a trailing slash, the case of the host) are
-	 * allowed; "www." and the path are not.
+	 * address (http or https, a trailing slash, the case of the host, a leading
+	 * "www.") are allowed; other subdomains and the path are not.
 	 *
 	 * The address is compared by its fingerprint ("home_key"), not by the
 	 * address kept for messages ("home"): migration tools replace the old

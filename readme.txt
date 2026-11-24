@@ -85,7 +85,7 @@ Cloudflare, a firewall, a security plugin or a page cache that ignores query str
 
 = I copied my site to staging. What happens there? =
 
-The plugin remembers the WordPress address on which the connection was made. A copy on another address shows "This WordPress Site Is a Copy": it shows no monitoring data, never uses or ends the original's connection, and can remove the copied connection locally. A copy on the same address, such as a local copy reached through the hosts file, counts as the same site: disconnecting or deleting the plugin there ends the original's connection. Deactivate the plugin on such copies instead.
+The plugin remembers the WordPress address on which the connection was made. A copy on another address shows "This WordPress Site Is a Copy": it shows no monitoring data, never uses or ends the original's connection, and can remove the copied connection locally. A copy on the same address, such as a local copy reached through the hosts file, counts as the same site, and so does a copy on the same address with or without "www." (a site connected on example.com and its copy on www.example.com, or the other way round): disconnecting or deleting the plugin there ends the original's connection. Deactivate the plugin on such copies instead.
 
 = Who can see the plugin screens? =
 
