@@ -66,19 +66,22 @@ final class Site_Health {
 			$data              = Status::data();
 
 			if ( null !== $data ) {
-				if ( in_array( $data['ssl']['state'], array( 'ok', 'problem' ), true ) ) {
+				// Out-of-date data passes nothing: a certificate or domain called fine only on UptimeWire's current word.
+				$fresh  = ! Status::is_stale( Status::get() );
+				$domain = self::domain_verdict( $data['domain'] );
+				if ( 'problem' === $data['ssl']['state'] || ( $fresh && 'ok' === $data['ssl']['state'] ) ) {
 					$add['ssl'] = __( 'SSL certificate (UptimeWire)', 'uptimewire' );
 				}
-				if ( null !== self::domain_verdict( $data['domain'] ) ) {
+				if ( null !== $domain && ( $fresh || 'current' !== $domain ) ) {
 					// An unknown expiration date is neither a pass nor a problem: it is in Info, not here.
 					$add['domain'] = __( 'Domain expiration (UptimeWire)', 'uptimewire' );
 				}
 				if ( null !== self::access_result() ) {
 					$add['access'] = __( 'UptimeWire can reach the website', 'uptimewire' );
 				}
-				// Only from current data: an out-of-date status passes nothing. No email on the domain, a job not
-				// connected and advice are not results: they are in Info.
-				if ( ! Status::is_stale( Status::get() ) ) {
+				// Only from current data. No email on the domain, a job not connected and advice are not results:
+				// they are in Info.
+				if ( $fresh ) {
 					if ( isset( $data['mail']['state'] ) && in_array( $data['mail']['state'], array( 'ok', 'problem' ), true ) ) {
 						$add['mail'] = __( 'Email domain (UptimeWire)', 'uptimewire' );
 					}
@@ -272,6 +275,10 @@ final class Site_Health {
 		$ssl  = null === $data ? array( 'state' => 'unknown' ) : $data['ssl'];
 		$when = self::expiry_line( $ssl );
 
+		if ( 'ok' === $ssl['state'] && Status::is_stale( Status::get() ) ) {
+			return self::result( 'ssl', 'recommended', __( 'UptimeWire has no current result for your SSL certificate', 'uptimewire' ), array( __( 'Open the UptimeWire screen to get the latest results.', 'uptimewire' ), $when, self::as_of( $ssl ) ), self::details( $data ) );
+		}
+
 		if ( 'ok' === $ssl['state'] ) {
 			return self::result( 'ssl', 'good', __( 'Your SSL certificate is valid', 'uptimewire' ), array( $when, self::as_of( $ssl ) ) );
 		}
@@ -303,8 +310,14 @@ final class Site_Health {
 				return self::result( 'domain', 'critical', __( 'Your domain registration has expired', 'uptimewire' ), array( __( 'Renew the domain with your registrar before someone else can register it.', 'uptimewire' ), self::expiry_line( $domain ), self::as_of( $domain ) ), self::details( $data ) );
 			case 'expires_soon':
 				return self::result( 'domain', 'recommended', __( 'Your domain expires soon', 'uptimewire' ), array( self::expiry_line( $domain ), __( 'Renew it with your registrar, or check that automatic renewal is on.', 'uptimewire' ), self::as_of( $domain ) ), self::details( $data ) );
-			default:
+			case 'current':
+				if ( Status::is_stale( Status::get() ) ) {
+					return self::result( 'domain', 'recommended', __( 'UptimeWire has no current result for your domain expiration', 'uptimewire' ), array( __( 'Open the UptimeWire screen to get the latest results.', 'uptimewire' ), self::expiry_line( $domain ), self::as_of( $domain ) ), self::details( $data ) );
+				}
 				return self::result( 'domain', 'good', __( 'Your domain registration is current', 'uptimewire' ), array( self::expiry_line( $domain ), self::as_of( $domain ) ) );
+			default:
+				// Unknown date: never a pass.
+				return self::result( 'domain', 'recommended', __( 'UptimeWire can’t see when your domain expires', 'uptimewire' ), array( __( 'Many domain registries don’t publish the date. Check it with your registrar.', 'uptimewire' ) ), self::details( $data ) );
 		}
 	}
 

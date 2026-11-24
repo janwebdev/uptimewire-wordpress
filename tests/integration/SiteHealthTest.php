@@ -269,6 +269,36 @@ final class SiteHealthTest extends Test_Case {
 	}
 
 	/**
+	 * Old data passes nothing: a valid certificate or a current domain from an out-of-date status is not
+	 * "good", while an expired one is still said.
+	 *
+	 * @return void
+	 */
+	public function test_stale_data_passes_no_certificate_or_domain() {
+		self::connect_site();
+		$answer                             = self::status_answer();
+		$answer['data']['checks']['domain'] = array( 'state' => 'ok', 'checked_at' => null, 'expires_at' => gmdate( 'Y-m-d\TH:i:s+00:00', time() + 200 * 86400 ), 'days_left' => 200, 'expiry_known' => true, 'warning' => null, 'error' => null ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::read_status( $answer );
+		$results = self::results();
+		$this->assertSame( 'good', $results['uptimewire_ssl']['status'], 'Current data passes' );
+		$this->assertSame( 'good', $results['uptimewire_domain']['status'] );
+
+		self::make_status_older( 3 * 3600 );
+		$results = self::results();
+		$this->assertArrayNotHasKey( 'uptimewire_ssl', $results );
+		$this->assertArrayNotHasKey( 'uptimewire_domain', $results );
+		$this->assertNotSame( 'good', Site_Health::test_ssl()['status'], 'Never good from old data, even when run directly' );
+		$this->assertNotSame( 'good', Site_Health::test_domain()['status'] );
+
+		\UptimeWire\Status::forget();
+		$answer                          = self::status_answer();
+		$answer['data']['checks']['ssl'] = array( 'state' => 'problem', 'warning' => 'expired', 'days_left' => -3, 'expires_at' => gmdate( 'Y-m-d\TH:i:s+00:00', time() - 3 * 86400 ), 'checked_at' => null, 'error' => null ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::read_status( $answer );
+		self::make_status_older( 3 * 3600 );
+		$this->assertSame( 'critical', self::results()['uptimewire_ssl']['status'], 'An expired certificate is still said' );
+	}
+
+	/**
 	 * An ended connection is reported once, without monitoring results.
 	 *
 	 * @return void

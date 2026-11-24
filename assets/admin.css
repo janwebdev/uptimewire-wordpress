@@ -419,6 +419,26 @@
 	overflow-wrap: anywhere;
 }
 
+.uptimewire-line-problem {
+	font-weight: 600;
+}
+
+.uptimewire-line-problem .dashicons,
+.uptimewire-line-advice .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	vertical-align: text-bottom;
+}
+
+.uptimewire-line-problem .dashicons {
+	color: var(--uptimewire-warn);
+}
+
+.uptimewire-line-advice .dashicons {
+	color: var(--uptimewire-info);
+}
+
 .uptimewire-muted {
 	color: #50575e;
 }

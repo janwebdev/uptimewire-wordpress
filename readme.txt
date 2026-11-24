@@ -4,123 +4,124 @@ Tags: uptime, monitoring, ssl, downtime, status
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.6.0
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Know when your WordPress website goes down. Uptime, SSL certificate, domain and DNS checks run by UptimeWire from outside your server.
+Know when your WordPress website goes down. UptimeWire checks uptime, SSL, domain and DNS from outside your server and shows the results in WordPress.
 
 == Description ==
 
-UptimeWire checks your website from its own servers on the internet. Because the checks run outside WordPress, they keep working when your site is offline, and they add no load to your server.
+UptimeWire is an external website monitoring service. It checks your website from its own servers on the internet, so the checks keep working when your site or your server is down, and they add no load to WordPress. This plugin connects your site to an UptimeWire account and shows the results inside WordPress.
 
-* Get notified when your website goes down.
-* Get warned before your SSL certificate or domain expires.
-* See whether the email setup of your domain (MX, SPF, DMARC, DKIM) works, and whether your scheduled jobs, such as backups, run on time.
-* Free monitoring for one website. No credit card required.
+**An UptimeWire account is required.** A Free plan is available: one website, no credit card. You can create the account while connecting.
 
-Connect your WordPress site to an UptimeWire account: click "Start Free Monitoring" or "Connect Existing Account", approve the connection in UptimeWire, and the plugin finishes connecting by itself. Then UptimeWire › Overview shows whether your website is online, its SSL certificate, domain and DNS checks, uptime for the last 24 hours, 7 days and 30 days, recent events, and whether alerts can reach you.
+What UptimeWire checks and the plugin shows:
 
-The "UptimeWire — Website Status" widget on the WordPress Dashboard answers the same question at a glance: is the website online, its uptime, its SSL certificate and when it was last checked. Tools › Site Health reports the connection, the monitoring, the SSL certificate, the domain expiration and whether a firewall blocks the checks, and its Info tab has an UptimeWire section to copy for support. UptimeWire › Settings sums up the connection, the monitoring, alert readiness and troubleshooting help.
+* **Uptime**: whether the website answers, response time, uptime for 24 hours, 7 and 30 days, and downtime events.
+* **SSL certificate**: valid, expiring soon or expired.
+* **Domain expiration**: when the domain expires, where the registry publishes the date.
+* **DNS**: changes to the DNS records of the domain.
+* **Email domain**: mail servers (MX), SPF, DMARC and DKIM, with problems told apart from tips. A domain without email is shown as such.
+* **Scheduled job**: whether a job you connected in UptimeWire, such as a backup, calls on time, late or reports a failure.
+
+Which checks your plan includes is decided in UptimeWire; the plugin shows "Not in your plan" for the others.
+
+Where you see it in WordPress:
+
+* **UptimeWire › Overview**: the website status, the checks, uptime, recent events and whether alerts can reach you.
+* **Dashboard widget** "UptimeWire — Website Status": the answer at a glance.
+* **Tools › Site Health**: UptimeWire's results as Site Health tests, and an UptimeWire section in Info to copy for support.
+* **UptimeWire › Settings**: the connection, the monitoring, alert readiness, Disconnect and troubleshooting.
+
+What the plugin does not do: it does not run checks itself, does not change monitoring settings, does not watch WP-Cron, and is not a security scanner or a backup tool. Alerts (email and other channels) are sent by UptimeWire and set up there.
 
 == External services ==
 
-This plugin connects your site to UptimeWire (https://uptimewire.com), an external website monitoring service. Nothing is sent until an administrator clicks "Start Free Monitoring" or "Connect Existing Account".
+This plugin is the client of UptimeWire (https://uptimewire.com), an external website monitoring service run by UptimeWire. It sends nothing until an administrator clicks "Start Free Monitoring" or "Connect Existing Account" (or adds the `UPTIMEWIRE_TOKEN` constant, see the FAQ).
 
-* When you connect: your site address, WordPress and plugin versions, environment type (production, staging and so on) and whether it is a multisite are sent to api.uptimewire.com. You approve the connection on app.uptimewire.com in a new tab. While you approve, the plugin asks api.uptimewire.com every few seconds whether you have finished, and only while the connection screen is open. UptimeWire then requests one address on your site (`/?uptimewire_proof=…`) to confirm that the request came from this WordPress.
-* While connected: while an administrator has UptimeWire › Overview or the WordPress Dashboard with the UptimeWire widget open, the plugin reads this website's monitoring status from api.uptimewire.com at most once every 1 to 5 minutes (as often as the website is checked), and when the administrator clicks Refresh. The answer is kept in the option `uptimewire_status`. Other plugin screens ask api.uptimewire.com whether the connection still works, at most once every 5 minutes. Site Health uses only the kept answer and requests nothing. Nothing is requested in the background when nobody looks.
-* When you disconnect, or delete the plugin: the plugin asks api.uptimewire.com once to end this site's connection. Only the WordPress connection ends; monitoring continues in UptimeWire.
+**api.uptimewire.com** (the UptimeWire API)
 
-No visitor data, user lists or content are sent.
+* When you connect: the site address, the WordPress and plugin versions, the environment type (production, staging and so on) and whether the site is a multisite are sent once. While you approve the connection, the plugin asks every few seconds whether you have finished, only while the connection screen is open.
+* While connected: the plugin reads this website's monitoring status while an administrator has the Overview screen or the Dashboard with the widget open, at most once every 1 to 5 minutes (as often as the website is checked), and when you click Refresh. Other plugin screens ask, at most once every 5 minutes, whether the connection still works. Site Health requests nothing. Nothing is requested in the background when nobody looks.
+* When you disconnect, or delete the plugin: the plugin asks once to end this site's connection.
+* Each request carries the site's connection credential. No visitor data, users, content or other personal data of your site are sent.
+
+**app.uptimewire.com** (the UptimeWire website)
+
+* You approve the connection, sign in or create an account there, in a new browser tab. The plugin links there for details.
+
+**Your website, requested by UptimeWire**
+
+* To confirm the connection, UptimeWire requests one address on your site (`/?uptimewire_proof=…`) once after you approve. Monitoring itself requests your public pages as any visitor would.
 
 Terms of Service: https://uptimewire.com/terms/
 Privacy Policy: https://uptimewire.com/privacy/
 
 == Installation ==
 
-1. Install the plugin from Plugins › Add New, or upload the `uptimewire` folder to `/wp-content/plugins/`.
-2. Activate the plugin.
-3. Open UptimeWire › Overview in the admin menu and click "Start Free Monitoring" or "Connect Existing Account".
+1. Install the plugin from Plugins › Add New, or upload the `uptimewire` folder to `/wp-content/plugins/`, and activate it.
+2. Open UptimeWire › Overview and click "Start Free Monitoring" (new account) or "Connect Existing Account".
+3. Approve the connection in the UptimeWire tab that opens. Check that it shows the same code as WordPress. The plugin finishes connecting by itself.
+4. If you created a new account, confirm your email address: UptimeWire starts monitoring after that.
 
 == Frequently Asked Questions ==
 
+= Do I need an UptimeWire account? Is it free? =
+
+Yes, the plugin shows the results of your UptimeWire account. The Free plan monitors one website. Paid plans add websites and checks; see https://uptimewire.com/pricing/.
+
+= Does disconnecting or deleting the plugin stop monitoring? =
+
+No. Disconnecting (UptimeWire › Settings) only ends the WordPress connection: WordPress stops showing results. Deactivating changes nothing and keeps the connection. Deleting removes all plugin data from the database (on every site of a network) after asking UptimeWire to end the connection. In all cases UptimeWire keeps monitoring and sending alerts. To stop monitoring, pause or delete the website in UptimeWire.
+
 = Can I monitor a local or staging site? =
 
-UptimeWire checks websites from the internet, so local sites (localhost, .local, .test, private network addresses) cannot be monitored. Staging sites can be, if they are public.
-
-= Who can see the plugin screens? =
-
-Administrators (users with the `manage_options` capability). Developers can change two capabilities with filters:
-
-* `uptimewire_capability`: who may see the monitoring data (Overview, Settings, the Dashboard widget, Site Health).
-* `uptimewire_manage_capability`: who may also manage the connection (connect, reconnect, disconnect, remove a copied connection, change the website to monitor).
-
-Both default to `manage_options`. Managing needs both capabilities, so letting editors see the widget with `uptimewire_capability` never lets them change the connection. Before version 0.5.0 the first filter allowed both.
+UptimeWire checks websites from the internet, so local sites (localhost, .local, .test, private addresses) can't be monitored. Public staging sites can.
 
 = UptimeWire says it couldn't confirm my website. What now? =
 
-After you approve, UptimeWire opens one address on your site. Cloudflare, a firewall, a security plugin or a page cache that ignores query strings can block or answer it instead of WordPress. Allow UptimeWire's checks (https://uptimewire.com/resources/guides/allow-uptimewire-checks-through-firewall/) and exclude addresses with `uptimewire_proof` from caching. You don't need to turn the protection off.
-
-= Where is the connection credential stored? Can I keep it out of the database? =
-
-It is stored in the option `uptimewire_connection`, which is not loaded on every page, and it is never shown on any screen. To keep it in `wp-config.php` instead, copy it once with WP-CLI (`wp option pluck uptimewire_connection token`) and add `define( 'UPTIMEWIRE_TOKEN', '…' );`. The plugin then uses the constant and removes the copy from the database. A plugin that logs every outgoing HTTP request would also log the credential, because it is sent in the request header. Remove the constant before connecting the site again. The plugin can't edit `wp-config.php`: after you disconnect, remove the line yourself (until you do, the plugin ignores that value). On a multisite network the constant counts for the main site only; the other sites of the network keep their own connections, and only a network administrator can disconnect it.
-
-= What is the difference between Disconnect, deactivating and deleting the plugin? =
-
-* **Disconnect** (UptimeWire › Settings): WordPress stops showing monitoring results. The plugin asks UptimeWire to end this site's connection and forgets the credential and the kept status. If UptimeWire can't be reached, the plugin still forgets the credential and says so, and tells you where to remove the connection in UptimeWire (unused connections also end by themselves after 90 days). The plugin ends a connection in UptimeWire only when it is proven to belong to this WordPress address: made by connecting on this site, or named for exactly this address by UptimeWire. Otherwise it only forgets it here and says so.
-* **Deactivating** the plugin stops it and changes nothing: the connection is kept, so after reactivating you don't need to connect again. The plugin has no scheduled tasks, so nothing runs while it is inactive.
-* **Deleting** the plugin removes all its data from your database, on every site of a multisite network. Before that it asks UptimeWire once, for a few seconds at most, to end each site's connection; deleting never fails because UptimeWire can't be reached. A `UPTIMEWIRE_TOKEN` line stays in `wp-config.php` until you remove it.
-
-None of these deletes your UptimeWire account, the monitored website or its monitoring history: UptimeWire keeps monitoring and sending alerts. To stop monitoring, pause or delete the website in UptimeWire.
+Cloudflare, a firewall, a security plugin or a page cache that ignores query strings can block or answer the confirmation request. Allow UptimeWire's checks (https://uptimewire.com/resources/guides/allow-uptimewire-checks-through-firewall/) and exclude addresses with `uptimewire_proof` from caching. You don't need to turn the protection off.
 
 = I copied my site to staging. What happens there? =
 
-The plugin records the WordPress Site Address on which the connection was made. A copy with another address (staging, development, a backup restored elsewhere, a domain change) shows "This WordPress Site Is a Copy": it shows no monitoring data, never uses or ends the original's credential, and offers to remove the copied connection from the copy only. http and https, a trailing slash and upper-case letters count as the same address; "www." and the path do not. A backup restored on the same address is the same site.
+The plugin remembers the WordPress address on which the connection was made. A copy on another address shows "This WordPress Site Is a Copy": it shows no monitoring data, never uses or ends the original's connection, and can remove the copied connection locally. A copy on the same address, such as a local copy reached through the hosts file, counts as the same site: disconnecting or deleting the plugin there ends the original's connection. Deactivate the plugin on such copies instead.
+
+= Who can see the plugin screens? =
+
+Administrators (`manage_options`). The filters `uptimewire_capability` (who may view the results) and `uptimewire_manage_capability` (who may also connect and disconnect) change this. Managing needs both.
+
+= Where is the credential stored? Can I keep it out of the database? =
+
+In the option `uptimewire_connection`, which is not loaded on every page and never shown. To keep it in `wp-config.php`, copy it once with WP-CLI (`wp option pluck uptimewire_connection token`) and add `define( 'UPTIMEWIRE_TOKEN', '…' );`. The plugin then uses the constant and removes the copy from the database. On a multisite network the constant counts for the main site only. After disconnecting, remove the line yourself.
+
+= Which data does the plugin keep in WordPress? =
+
+The connection, the last status received from UptimeWire (option `uptimewire_status`) and short-lived connection state. It creates no tables and schedules no tasks.
+
+= Where do I get help? =
+
+Tools › Site Health › Info › UptimeWire has the details support needs, without the credential. Write to support@uptimewire.com or use the WordPress.org support forum of this plugin. Report security problems privately to support@uptimewire.com.
+
+== Screenshots ==
+
+1. Overview before connecting: start free monitoring or connect an existing account.
+2. Connecting: approve in UptimeWire, with the same code shown in WordPress.
+3. Overview of a connected website: status, checks, uptime and recent events.
+4. The Dashboard widget "UptimeWire — Website Status".
+5. UptimeWire tests in Tools › Site Health.
+6. Settings: connection, monitoring, alert readiness and Disconnect.
 
 == Changelog ==
 
-= 0.6.0 =
-* Two new checks of UptimeWire, on every plan: "Email Domain" (mail servers, SPF, DMARC, DKIM in plain words; a domain without email is shown calmly) and "Scheduled Job" (on time, late, failed, or how to connect one in UptimeWire). Cards on Overview, a line in the Dashboard widget when something needs doing, Site Health recommendations, rows in Settings and their events.
-* The plugin never receives the records of your domain or the secret address of your scheduled job.
-* Works with an UptimeWire server that does not send the new checks yet: then nothing new is shown.
-
-= 0.5.0 =
-* Disconnect in Settings, with a confirmation: ends the connection in UptimeWire and forgets it locally, and says honestly when UptimeWire couldn't confirm.
-* Copied and moved sites are recognised by the WordPress address: they show no data, never use or end the original's connection, and can remove the copied connection locally.
-* Separate capabilities for viewing (`uptimewire_capability`) and managing (`uptimewire_manage_capability`).
-* Deleting the plugin asks UptimeWire to end the connection (best effort), then removes all data.
-* Clearer words for a connection that is no longer active; the website to monitor can't be changed while connected.
-
-= 0.4.0 =
-* "UptimeWire — Website Status" widget on the WordPress Dashboard: status, uptime, SSL certificate, last check, with honest words for old data and short history.
-* Site Health tests (connection, monitoring, SSL certificate, domain expiration, blocked checks) and an UptimeWire section in Site Health Info, built from the kept status only.
-* Settings: connection, monitoring, alert readiness, plans link and troubleshooting.
-* Alert readiness tells configured channels apart from whether monitoring alerts are active now (paused, starting, email not verified).
-
-= 0.3.0 =
-* Monitoring dashboard on Overview: website status, SSL certificate, domain and DNS cards, uptime for 24 hours, 7 and 30 days, recent events, alert readiness, the UptimeWire account number.
-* The status is kept locally and refreshed while the screen is open, or with the Refresh button; when UptimeWire can't be reached, the last known status is shown as such.
-
-= 0.2.0 =
-* Connect the site to an UptimeWire account by code (OAuth 2.0 Device Authorization Grant, RFC 8628): waiting screen, approval in a new tab, site confirmation, address check, clear messages for every outcome.
-* Connection state on Overview and Settings.
-
-= 0.1.0 =
-* Plugin foundation: admin menu, welcome screen with environment checks, website address, Help tabs, clean uninstall.
+= 1.0.0 =
+* First public release.
+* Connect a site to UptimeWire by code (OAuth 2.0 Device Authorization, RFC 8628), with a site-scoped, read-only credential.
+* Overview, Dashboard widget, Site Health tests and Info, Settings.
+* Uptime, SSL certificate, domain expiration, DNS, email domain and scheduled job results.
+* Disconnect, copy detection, separate view and manage capabilities, clean uninstall.
 
 == Upgrade Notice ==
 
-= 0.6.0 =
-Email setup of your domain and scheduled jobs, inside WordPress.
-
-= 0.5.0 =
-Disconnect, copied sites and separate viewing and managing permissions. If you used the `uptimewire_capability` filter to let other roles use the plugin, they can now only view; see the FAQ.
-
-= 0.4.0 =
-Website status on the WordPress Dashboard and in Site Health.
-
-= 0.3.0 =
-Monitoring results inside WordPress.
-
-= 0.2.0 =
-Connecting to UptimeWire.
+= 1.0.0 =
+First public release.

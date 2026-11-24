@@ -225,6 +225,12 @@ final class MailCronTest extends Test_Case {
 		$this->assertStringContainsString( 'Email signature (DKIM): could not be checked', $card );
 		$this->assertStringNotContainsString( 'broken', strtolower( $card ), 'DKIM not found is never broken' );
 		$this->assertStringContainsString( 'Needs attention: email domain.', $html );
+		// The problem is marked and first, the tip is marked as a tip, the rest follows.
+		$this->assertMatchesRegularExpression( '/uptimewire-line-problem">.*?Problem:.*?Sender list \(SPF\): too many lookups/s', $card );
+		$this->assertMatchesRegularExpression( '/uptimewire-line-advice">.*?Tip:.*?Spoofing protection \(DMARC\)/s', $card );
+		$this->assertSame( 1, substr_count( $card, 'uptimewire-line-problem' ), 'Only the problem is marked as one' );
+		$this->assertLessThan( strpos( $card, 'Spoofing protection' ), strpos( $card, 'Sender list' ) );
+		$this->assertLessThan( strpos( $card, 'Mail servers (MX)' ), strpos( $card, 'Spoofing protection' ) );
 
 		self::read( self::answer() );
 		$html = self::overview();
@@ -232,6 +238,7 @@ final class MailCronTest extends Test_Case {
 		$this->assertStringContainsString( 'uptimewire-tone-ok', $card );
 		$this->assertStringContainsString( 'Working', $card );
 		$this->assertStringContainsString( 'tip:', $card, 'Advice is shown on the card, without alarm' );
+		$this->assertStringNotContainsString( 'uptimewire-line-problem', $card, 'A tip is never shown as a problem' );
 		$this->assertStringNotContainsString( 'Needs attention: email domain', $html );
 
 		self::read(
@@ -292,7 +299,8 @@ final class MailCronTest extends Test_Case {
 
 			if ( in_array( $state, array( 'on_time', 'late', 'failed' ), true ) ) {
 				$this->assertStringContainsString( 'Last call 2 hours ago', $card, $state );
-				$this->assertStringContainsString( 'Expected every 1 day, up to 1 hour late', $card, $state );
+				$this->assertStringContainsString( 'Expected every day</p>', $card, $state );
+				$this->assertStringContainsString( 'Alert when more than 1 hour late', $card, $state );
 			}
 			$this->assertSame( in_array( $state, array( 'late', 'failed' ), true ), false !== strpos( $html, 'Needs attention: scheduled job.' ), $state );
 		}

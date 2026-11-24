@@ -594,8 +594,9 @@ final class Dashboard {
 
 		switch ( $check['state'] ) {
 			case 'ok':
-				$tone  = 'ok';
-				$value = $domain ? __( 'Registered', 'uptimewire' ) : __( 'Valid', 'uptimewire' );
+				// A domain whose expiry date nobody can see is not a confirmed pass.
+				$tone  = $domain && empty( $check['expiry_known'] ) ? 'info' : 'ok';
+				$value = $domain ? ( 'ok' === $tone ? __( 'Registered', 'uptimewire' ) : __( 'Expiry date unknown', 'uptimewire' ) ) : __( 'Valid', 'uptimewire' );
 				break;
 			case 'problem':
 				$tone  = 'expired' === $check['warning'] ? 'bad' : 'warn';
@@ -633,7 +634,7 @@ final class Dashboard {
 				/* translators: %s: date. */
 				$lines[] = sprintf( __( 'Expires on %s', 'uptimewire' ), $date );
 			} elseif ( $domain ) {
-				$lines[] = __( 'Expiry date unknown: the domain registry doesn’t publish it.', 'uptimewire' );
+				$lines[] = __( 'UptimeWire can’t see when this domain expires: many domain registries don’t publish the date. Check it with your registrar.', 'uptimewire' );
 			}
 		}
 
@@ -722,9 +723,17 @@ final class Dashboard {
 		}
 
 		if ( 'none' !== $mail['state'] ) {
+			// Problems first and marked as such, then tips, then the rest: a tip is never read as a fault.
+			$groups = array(
+				'problem' => array(),
+				'advice'  => array(),
+				'other'   => array(),
+			);
 			foreach ( $mail['items'] as $key => $item ) {
-				$lines[] = self::mail_line( $key, $item );
+				$kind              = in_array( $item['state'], array( 'problem', 'advice' ), true ) ? $item['state'] : 'other';
+				$groups[ $kind ][] = 'other' === $kind ? self::mail_line( $key, $item ) : array( $kind => self::mail_line( $key, $item ) );
 			}
+			$lines = array_merge( $groups['problem'], $groups['advice'], $groups['other'] );
 		}
 
 		if ( array() === $lines ) {
@@ -816,8 +825,17 @@ final class Dashboard {
 				: __( 'No call yet', 'uptimewire' );
 
 			if ( null !== $job['interval_seconds'] && null !== $job['grace_seconds'] ) {
-				/* translators: 1: time between runs, such as "1 day"; 2: allowed delay, such as "1 hour". */
-				$lines[] = sprintf( __( 'Expected every %1$s, up to %2$s late', 'uptimewire' ), self::duration( $job['interval_seconds'] ), self::duration( $job['grace_seconds'] ) );
+				$every   = array(
+					60    => __( 'Expected every minute', 'uptimewire' ),
+					3600  => __( 'Expected every hour', 'uptimewire' ),
+					86400 => __( 'Expected every day', 'uptimewire' ),
+				);
+				$lines[] = isset( $every[ $job['interval_seconds'] ] )
+					? $every[ $job['interval_seconds'] ]
+					/* translators: %s: time between runs, such as "6 hours". */
+					: sprintf( __( 'Expected every %s', 'uptimewire' ), self::duration( $job['interval_seconds'] ) );
+				/* translators: %s: allowed delay, such as "1 hour". */
+				$lines[] = sprintf( __( 'Alert when more than %s late', 'uptimewire' ), self::duration( $job['grace_seconds'] ) );
 			}
 		} else {
 			$lines[] = __( 'No result to show yet.', 'uptimewire' );
@@ -833,7 +851,7 @@ final class Dashboard {
 	 * @param string                      $icon    Dashicon class.
 	 * @param string                      $tone    ok, warn, bad, info, off or unknown.
 	 * @param string                      $value   Main value in words.
-	 * @param array<int, string|string[]> $lines   Plain lines, or array( 'untrusted' => text ) for text from UptimeWire.
+	 * @param array<int, string|string[]> $lines   Plain lines; array( 'untrusted' => text ) for text from UptimeWire; array( 'problem' => text ) or array( 'advice' => text ) for a marked line.
 	 * @param int|null                    $checked Last check time.
 	 * @param string|null                 $detail  Link to details in UptimeWire.
 	 * @param string|null                 $action  Text of that link when it is an action, instead of "Details".
@@ -853,7 +871,11 @@ final class Dashboard {
 			<h3 class="uptimewire-card-title"><span class="dashicons <?php echo esc_attr( $icon ); ?>" aria-hidden="true"></span> <?php echo esc_html( $name ); ?></h3>
 			<p class="uptimewire-card-value"><span class="dashicons <?php echo esc_attr( isset( $marks[ $tone ] ) ? $marks[ $tone ] : $marks['unknown'] ); ?>" aria-hidden="true"></span> <?php echo esc_html( $value ); ?></p>
 			<?php foreach ( $lines as $line ) : ?>
-				<?php if ( is_array( $line ) ) : ?>
+				<?php if ( is_array( $line ) && isset( $line['problem'] ) ) : ?>
+					<p class="uptimewire-card-line uptimewire-line-problem"><span class="dashicons dashicons-warning" aria-hidden="true"></span> <span class="screen-reader-text"><?php esc_html_e( 'Problem:', 'uptimewire' ); ?></span> <?php echo esc_html( $line['problem'] ); ?></p>
+				<?php elseif ( is_array( $line ) && isset( $line['advice'] ) ) : ?>
+					<p class="uptimewire-card-line uptimewire-line-advice"><span class="dashicons dashicons-lightbulb" aria-hidden="true"></span> <span class="screen-reader-text"><?php esc_html_e( 'Tip:', 'uptimewire' ); ?></span> <?php echo esc_html( $line['advice'] ); ?></p>
+				<?php elseif ( is_array( $line ) ) : ?>
 					<p class="uptimewire-card-line uptimewire-untrusted"><?php echo esc_html( $line['untrusted'] ); ?></p>
 				<?php else : ?>
 					<p class="uptimewire-card-line"><?php echo esc_html( $line ); ?></p>
