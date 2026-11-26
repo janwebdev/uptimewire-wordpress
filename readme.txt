@@ -12,9 +12,9 @@ Know when your WordPress site goes down. UptimeWire checks uptime, SSL, domain a
 
 == Description ==
 
-UptimeWire is an external website monitoring service. It checks your website from its own servers on the internet, so the checks keep working when your site or your server is down, and they add no load to WordPress. This plugin connects your site to an UptimeWire account and shows the results inside WordPress.
+UptimeWire is an external website monitoring service. It checks your website from its own servers on the internet, so the checks keep working when your site or your server is down, and they add no load to WordPress. This plugin connects your site to your account on UptimeWire and shows the results inside WordPress.
 
-**An UptimeWire account is required.** A Free plan is available: one website, no credit card. You can create the account while connecting.
+**You need an account on UptimeWire.** A Free plan is available: one website, no credit card. You can create the account while connecting.
 
 What UptimeWire checks and the plugin shows:
 
@@ -31,7 +31,7 @@ Where you see it in WordPress:
 
 * **UptimeWire › Overview**: the website status, the checks, uptime, recent events and whether alerts can reach you.
 * **Dashboard widget** "UptimeWire — Website Status": the answer at a glance.
-* **Tools › Site Health**: UptimeWire's results as Site Health tests, and an UptimeWire section in Info to copy for support.
+* **Tools › Site Health**: UptimeWire's results as Site Health tests, and a section in Info to copy for support.
 * **UptimeWire › Settings**: the connection, the monitoring, alert readiness, Disconnect and troubleshooting.
 
 What the plugin does not do: it does not run checks itself, does not change monitoring settings, does not watch WP-Cron, and is not a security scanner or a backup tool. Alerts (email and other channels) are sent by UptimeWire and set up there.
@@ -67,7 +67,7 @@ Privacy Policy: https://uptimewire.com/privacy/
 
 == Frequently Asked Questions ==
 
-= Do I need an UptimeWire account? Is it free? =
+= Do I need an account on UptimeWire? Is it free? =
 
 Yes, the plugin shows the results of your UptimeWire account. The Free plan monitors one website. Paid plans add websites and checks; see https://uptimewire.com/pricing/.
 
